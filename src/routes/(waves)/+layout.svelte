@@ -4,6 +4,7 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 
 	import { description, image, keywords, title, siteBaseUrl } from '$lib/data/meta';
+	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 </script>
 
 <svelte:head>
@@ -27,6 +28,8 @@
 
 
 <Header />
+
+<WebsiteTabs />
 
 <main>
 	<slot />

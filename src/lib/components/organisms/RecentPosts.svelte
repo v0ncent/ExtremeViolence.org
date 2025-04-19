@@ -30,9 +30,10 @@
 
 	.grid {
 		width: 75%;
-		display: columns;
+		display: grid;
 		column-gap: 100px;
 		text-align: left;
+		gap: 32px 24px;
 
 		@include for-phone-only {
 			grid-template-columns: 1fr;

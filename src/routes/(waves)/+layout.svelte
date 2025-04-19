@@ -9,8 +9,13 @@
 
 <WebsiteTabs />
 
+<br />
+
 <main>
 	<slot />
 </main>
+
+<br />
+<br />
 
 <Footer />

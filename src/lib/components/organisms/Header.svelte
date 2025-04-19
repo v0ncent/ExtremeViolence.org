@@ -17,7 +17,7 @@
 
 	header {
 		position: relative;
-		padding: 30px 0;
+		padding: 110px 0;
 
 		@include for-phone-only {
 			padding: 20px 0;

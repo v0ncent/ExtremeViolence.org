@@ -2,20 +2,15 @@
 	import BlogPostCard from '$lib/components/molecules/BlogPostCard.svelte';
 	import ContentSection from '$lib/components/organisms/ContentSection.svelte';
 	import type { BlogPost } from '$lib/utils/types';
-	import Button from '$lib/components/atoms/Button.svelte';
-
+	
 	export let posts: BlogPost[];
 </script>
 
 <ContentSection
-	id="recent-posts"
-	title="Blog posts"
-	description="This section shows the 4 most recent blog posts. Check them out for tips on how to get started!"
+	id="recent-news"
+	title="News"
 	align="left"
 >
-	<div slot="button">
-		<Button href="/blog">View More</Button>
-	</div>
 	<div class="grid">
 		{#each posts as post}
 			<BlogPostCard
@@ -34,10 +29,10 @@
 	@import '$lib/scss/breakpoints.scss';
 
 	.grid {
-		width: 100%;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		grid-gap: 20px;
+		width: 75%;
+		display: columns;
+		column-gap: 100px;
+		text-align: left;
 
 		@include for-phone-only {
 			grid-template-columns: 1fr;

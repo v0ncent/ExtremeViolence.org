@@ -1,104 +1,31 @@
 <script lang="ts">
-	export let id: string | undefined = undefined;
-	export let title: string | undefined = undefined;
-	export let description: string | undefined = undefined;
-
-	export let align: 'left' | 'top' | 'right' = 'top';
+	export let id: string;
+	export let title: string;
+	export let align: 'left' | 'center' | 'top' = 'center';
 </script>
 
-<section {id} class="content-section {align}">
-	<div class="title-area">
-		{#if title || description}
-			<div class="text">
-				{#if title}
-					<h2>
-						{title}
-					</h2>
-				{/if}
-				{#if description}
-					<p>
-						{description}
-					</p>
-				{/if}
-			</div>
-		{/if}
-		{#if $$slots['button']}
-			<div class="button">
-				<slot name="button" />
-			</div>
-		{/if}
-	</div>
-	<div class="content-area">
-		<slot />
-	</div>
+<section id={id} class={`content-section align-${align}`}>
+	<h2>{title}</h2>
+	<slot />
 </section>
 
 <style lang="scss">
-	@import '../../scss/breakpoints.scss';
-
 	.content-section {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 40px;
-		padding: 50px 0;
+		margin-top: 2rem;
+		margin-bottom: 2rem;
+		padding: 0 1rem;
 
-		.title-area {
-			flex: 2;
-
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-			align-items: center;
+		&.align-center {
+			max-width: 800px;
+			margin-left: auto;
+			margin-right: auto;
 			text-align: center;
-			gap: 15px;
-
-			.text {
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				gap: 5px;
-			}
-		}
-		.content-area {
-			flex: 5;
-
-			display: grid;
-			place-items: center;
 		}
 
-		@include for-tablet-landscape-up {
-			&.left {
-				.title-area {
-					order: 1;
-				}
-				.content-area {
-					order: 2;
-				}
-			}
-			&.right {
-				.title-area {
-					order: 2;
-				}
-				.content-area {
-					order: 1;
-				}
-			}
-			&.top {
-				flex-direction: column;
-				.title-area {
-					order: 1;
-					max-width: 600px;
-				}
-				.content-area {
-					order: 2;
-					width: 100%;
-				}
-			}
-		}
-		@include for-tablet-portrait-down {
-			flex-direction: column;
+		&.align-left {
+			max-width: unset; /* remove center constraints */
+			margin: 0;
+			text-align: left;
 		}
 	}
 </style>

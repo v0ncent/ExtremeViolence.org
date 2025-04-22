@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Card from '$lib/components/atoms/Card.svelte';
-	import Tag from '$lib/components/atoms/Tag.svelte';
 	import Image from '../atoms/Image.svelte';
 
 	export let title: string;

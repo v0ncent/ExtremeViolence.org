@@ -17,6 +17,7 @@
 				slug={post.slug}
 				title={post.title}
 				excerpt={post.excerpt}
+				coverImage={post.coverImage}
 				showImage={true}
 			/>
 		{/each}

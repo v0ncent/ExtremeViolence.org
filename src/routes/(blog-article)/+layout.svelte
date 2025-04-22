@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
-	import Tag from '$lib/components/atoms/Tag.svelte';
 	import dateformat from 'dateformat';
+	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
@@ -36,6 +36,8 @@
 
 <div class="article-layout">
 	<Header showBackground />
+
+	<WebsiteTabs />
 
 	<main>
 		<article id="article-content">

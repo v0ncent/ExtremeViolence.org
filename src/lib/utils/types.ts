@@ -25,7 +25,6 @@ export type Feature = {
 }
 
 export type BlogPost = {
-  tags: string[],
   keywords: string[],
   hidden: boolean,
   slug: string,
@@ -34,7 +33,6 @@ export type BlogPost = {
   updated: string,
   excerpt: string,
   html: string | undefined,
-  readingTime: string,
   relatedPosts: BlogPost[],
   coverImage: string | undefined
 }

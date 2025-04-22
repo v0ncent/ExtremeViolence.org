@@ -6,22 +6,12 @@
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
-	import RelatedPosts from '$lib/components/organisms/RelatedPosts.svelte';
 	import Image from '$lib/components/atoms/Image.svelte';
 
 	export let data: { post: BlogPost };
 	$: ({ post } = data);
 
 	let metaKeywords = keywords;
-
-	$: {
-		if (post?.tags?.length) {
-			metaKeywords = post.tags.concat(metaKeywords);
-		}
-		if (post?.keywords?.length) {
-			metaKeywords = post.keywords.concat(metaKeywords);
-		}
-	}
 </script>
 
 <svelte:head>
@@ -56,16 +46,6 @@
 					{#if post.updated}
 						<div class="note">Updated on {dateformat(post.updated, 'UTC:dd mmmm yyyy')}</div>
 					{/if}
-					{#if post.readingTime}
-						<div class="note">{post.readingTime}</div>
-					{/if}
-					{#if post.tags?.length}
-						<div class="tags">
-							{#each post.tags as tag}
-								<Tag>{tag}</Tag>
-							{/each}
-						</div>
-					{/if}
 				{/if}
 			</div>
 			{#if post && post.coverImage}
@@ -77,12 +57,6 @@
 				<slot />
 			</div>
 		</article>
-
-		{#if post.relatedPosts && post.relatedPosts.length > 0}
-			<div class="container">
-				<RelatedPosts posts={post.relatedPosts} />
-			</div>
-		{/if}
 	</main>
 
 	<Footer />

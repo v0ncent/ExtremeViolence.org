@@ -7,7 +7,6 @@
 	export let coverImage: string | undefined = undefined;
 	export let excerpt: string;
 	export let slug: string;
-	export let tags: string[] | undefined;
 	export let readingTime: string | undefined = undefined;
 
 	export let showImage = true;
@@ -34,15 +33,6 @@
 			<p class="text">
 				{excerpt}
 			</p>
-		{/if}
-	</div>
-	<div class="footer" slot="footer">
-		{#if tags?.length}
-			<div class="tags">
-				{#each tags.slice(0, 2) as tag}
-					<Tag>{tag}</Tag>
-				{/each}
-			</div>
 		{/if}
 	</div>
 </Card>

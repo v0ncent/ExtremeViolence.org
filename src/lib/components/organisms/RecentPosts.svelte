@@ -17,9 +17,7 @@
 				slug={post.slug}
 				title={post.title}
 				excerpt={post.excerpt}
-				tags={post.tags}
-				readingTime={post.readingTime}
-				showImage={false}
+				showImage={true}
 			/>
 		{/each}
 	</div>

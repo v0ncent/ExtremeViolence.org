@@ -1,7 +1,7 @@
 <script lang="ts">
 	export let id: string;
 	export let title: string;
-	export let align: 'left' | 'center' | 'top' = 'center';
+	export let align: 'left' | 'center' | 'right' | 'top' = 'center';
 </script>
 
 <section id={id} class={`content-section align-${align}`}>

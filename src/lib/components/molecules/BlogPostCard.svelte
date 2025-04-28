@@ -9,12 +9,16 @@
 	export let readingTime: string | undefined = undefined;
 
 	export let showImage = true;
+
+	export let small: boolean = false;
 </script>
 
 <Card
 	href="/{slug}"
 	target="_self"
-	additionalClass="blog-post-card {!showImage || !coverImage ? 'no-image' : ''}"
+	additionalClass="blog-post-card {!showImage || !coverImage ? 'no-image' : ''} {small
+		? 'small'
+		: ''}"
 >
 	<div class="image" slot="image">
 		{#if coverImage}
@@ -82,5 +86,22 @@
 
 	:global(.blog-post-card.no-image > .image) {
 		display: none;
+	}
+
+	:global(.blog-post-card.small) {
+		padding: 8px;
+		font-size: 0.8rem;
+
+		.image img {
+			height: 120px; // smaller image if needed
+		}
+
+		.title {
+			font-size: 1rem;
+		}
+
+		.text {
+			font-size: 0.8rem;
+		}
 	}
 </style>

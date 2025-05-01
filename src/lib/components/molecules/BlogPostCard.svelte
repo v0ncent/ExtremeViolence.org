@@ -83,7 +83,7 @@
 	}
 
 	.preview {
-		margin-top: 20px;
+		margin-top: 25px;
 	}
 
 	.footer {
@@ -113,5 +113,15 @@
 		.text {
 			font-size: 0.8rem;
 		}
+	}
+
+	:global(.preview .read-more) {
+		color: red;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	:global(.preview .read-more:hover) {
+		text-decoration: underline;
 	}
 </style>

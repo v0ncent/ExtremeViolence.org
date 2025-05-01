@@ -42,9 +42,9 @@ export const filterPosts = (posts: BlogPost[]) => {
     .map((post) => {
       const readingTimeResult = post.html ? readingTime(striptags(post.html) || '') : undefined;
       const relatedPosts = getRelatedPosts(posts, post);
-      const prieviewHtml = post.html ? extractPreview(post.html) : undefined;
 
-      console.log('Post:', post.slug, 'Preview:', prieviewHtml);
+      // for news articles showing more in the card we truncate the
+      const prieviewHtml = post.html ? extractPreview(post.html) : undefined;
 
       return {
         ...post,
@@ -73,18 +73,25 @@ const getRelatedPosts = (posts: BlogPost[], post: BlogPost) => {
   }));
 }
 
-function extractPreview(html: string, charLimit = 300): string {
+function extractPreview(html: string, charLimit = 1000): string {
   const match = html.match(/<p>(.*?)<\/p>/i);
+  let text: string;
+
   if (match && match[1]) {
-    const text = striptags(match[1]);
-    return text.length > charLimit
-      ? text.slice(0, charLimit) + '...'
-      : text;
+    text = striptags(match[1]);
+  } else {
+    text = striptags(html).slice(0, charLimit);
   }
 
-  // Fallback to plain truncation
-  const fallback = striptags(html).slice(0, charLimit);
-  return fallback + '...';
+  if (text.length > charLimit) {
+    return (
+      text.slice(0, charLimit) +
+      '<span class="read-more"> ...Click to read more!</span>'
+    );
+  }
+
+  return text;
 }
+
 
 // #endregion

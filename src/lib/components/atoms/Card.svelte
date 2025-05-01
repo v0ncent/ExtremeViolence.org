@@ -49,7 +49,7 @@
 		transition: all 0.4s ease;
 		position: relative;
 		overflow: hidden;
-		width: 95%;
+		width: flex;
 
 		display: flex;
 		flex-direction: row;

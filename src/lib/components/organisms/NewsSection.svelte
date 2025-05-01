@@ -19,6 +19,7 @@
 				excerpt={post.excerpt}
 				coverImage={post.coverImage}
 				showImage={true}
+				previewHtml = {post.prieviewHtml}
 			/>
 		{/each}
 	</div>

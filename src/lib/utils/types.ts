@@ -33,6 +33,7 @@ export type BlogPost = {
   date: string,
   updated: string,
   excerpt: string,
+  prieviewHtml: string,
   html: string | undefined,
   relatedPosts: BlogPost[],
   coverImage: string | undefined

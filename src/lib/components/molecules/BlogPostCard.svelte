@@ -11,6 +11,8 @@
 	export let showImage = true;
 
 	export let small: boolean = false;
+
+	export let previewHtml: string | undefined = undefined;
 </script>
 
 <Card
@@ -36,6 +38,9 @@
 			<p class="text">
 				{excerpt}
 			</p>
+		{/if}
+		{#if previewHtml}
+			<div class="preview">{@html previewHtml}</div>
 		{/if}
 	</div>
 </Card>
@@ -72,8 +77,13 @@
 
 	.text {
 		margin-top: 5px;
-		font-size: 0.9rem;
+		font-size: 1rem;
 		text-align: justify;
+		font-weight: bold;
+	}
+
+	.preview {
+		margin-top: 20px;
 	}
 
 	.footer {

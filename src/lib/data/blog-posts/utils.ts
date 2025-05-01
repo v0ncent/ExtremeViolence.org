@@ -42,11 +42,15 @@ export const filterPosts = (posts: BlogPost[]) => {
     .map((post) => {
       const readingTimeResult = post.html ? readingTime(striptags(post.html) || '') : undefined;
       const relatedPosts = getRelatedPosts(posts, post);
+      const prieviewHtml = post.html ? extractPreview(post.html) : undefined;
+
+      console.log('Post:', post.slug, 'Preview:', prieviewHtml);
 
       return {
         ...post,
         readingTime: readingTimeResult ? readingTimeResult.text : '',
         relatedPosts: relatedPosts,
+        prieviewHtml: prieviewHtml
       } as BlogPost;
     });
 }
@@ -67,6 +71,20 @@ const getRelatedPosts = (posts: BlogPost[], post: BlogPost) => {
     ...p,
     readingTime: p.html ? readingTime(striptags(p.html) || '').text : '',
   }));
+}
+
+function extractPreview(html: string, charLimit = 300): string {
+  const match = html.match(/<p>(.*?)<\/p>/i);
+  if (match && match[1]) {
+    const text = striptags(match[1]);
+    return text.length > charLimit
+      ? text.slice(0, charLimit) + '...'
+      : text;
+  }
+
+  // Fallback to plain truncation
+  const fallback = striptags(html).slice(0, charLimit);
+  return fallback + '...';
 }
 
 // #endregion

@@ -1,11 +1,11 @@
 ---
-title: How Blog Posts Work
-slug: blog-posts
-coverImage: /images/posts/blog-posts.jpg
-date: 2023-04-22T21:55:15.361Z
-excerpt: How to manage existing blog posts and create new ones
+title: 5
+slug: another-post
+coverImage: /images/posts/Frieren20.PNG
+date: 2023-08-22T21:55:15.361Z
+excerpt: some penis type shit ya feel me
 tags:
-  - Documentation
+  - new
 ---
 
 <script>

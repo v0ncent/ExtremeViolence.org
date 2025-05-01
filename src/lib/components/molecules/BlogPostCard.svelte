@@ -84,6 +84,7 @@
 
 	.preview {
 		margin-top: 25px;
+		word-spacing: 5px;
 	}
 
 	.footer {

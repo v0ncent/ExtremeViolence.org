@@ -25,6 +25,7 @@ export type Feature = {
 }
 
 export type BlogPost = {
+  [x: string]: any;
   keywords: string[],
   hidden: boolean,
   slug: string,

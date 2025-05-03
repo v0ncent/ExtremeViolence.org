@@ -16,6 +16,8 @@ The contact me section of this site utilizes NodeMailer: https://www.nodemailer.
 
 If you do not set it up properly you cannot send messages via the contact form.
 
+```Please note that this implementation is for Gmail accounts only```
+
 1. Enable 2-factor authentication on your google account
 2. Generate a app password via: https://myaccount.google.com/apppasswords
 3. Replace ```.env.example``` with ```.env```

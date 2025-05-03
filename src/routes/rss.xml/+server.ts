@@ -6,7 +6,7 @@ import { filterPosts, importPosts } from '$lib/data/blog-posts/utils';
 export const prerender = true;
 
 export async function GET() {
-  const allPosts = importPosts(true);
+  const allPosts = importPosts(true, '');
   const filteredPosts = filterPosts(allPosts);
 
   const body = xml(filteredPosts);
@@ -49,7 +49,7 @@ const xml = (posts: BlogPost[]) => `
           <description>${post.excerpt}</description>
           <link>${siteBaseUrl}/${post.slug}</link>
           <pubDate>${dateformat(post.date, 'ddd, dd mmm yyyy HH:MM:ss o')}</pubDate>
-          ${post.tags ? post.tags.map((tag) => `<category>${tag}</category>`).join('') : ''}
+          ${post.tags ? post.tags.map((tag: any) => `<category>${tag}</category>`).join('') : ''}
           <content:encoded><![CDATA[
             <div style="margin: 50px 0; font-style: italic;">
               If anything looks wrong, 

@@ -1,4 +1,9 @@
 import { filterPosts, importPosts } from './utils';
 
-export const allPosts = importPosts(true);
-export const filteredPosts = filterPosts(allPosts);
+// news posts
+export const allNewsPosts = importPosts(true, '(blog-article)');
+export const filteredNewsPosts = filterPosts(allNewsPosts);
+
+// gallery posts
+export const allGalleryPosts = importPosts(true, '(view-gallerypieces-page)');
+export const filteredGalleryPosts = filterPosts(allGalleryPosts);

@@ -10,22 +10,22 @@ import readingTime from 'reading-time/lib/reading-time';
 import striptags from 'striptags';
 import type { BlogPost } from "$lib/utils/types";
 
-export const importPosts = (render = false) => {
-  const blogImports = import.meta.glob('$routes/*/*/*.md', { eager: true });
-  const innerImports = import.meta.glob('$routes/*/*/*/*.md', { eager: true });
-
-  const imports = { ...blogImports, ...innerImports };
+export const importPosts = (render = false, route: string) => {
+  const blogImports = import.meta.glob('$routes/**/*.md', { eager: true });
 
   const posts: BlogPost[] = [];
-  for (const path in imports) {
-    const post = imports[path] as any;
+  for (const path in blogImports) {
+    if (!path.includes(route)) continue;
+  
+    const post = blogImports[path] as any;
     if (post) {
       posts.push({
         ...post.metadata,
-        html: render && post.default.render ? post.default.render()?.html : undefined,
+        html: render && post.default?.render ? post.default.render()?.html : undefined,
       });
     }
   }
+  
 
   return posts;
 }
@@ -40,8 +40,9 @@ export const filterPosts = (posts: BlogPost[]) => {
           : 0
     )
     .map((post) => {
+
       const readingTimeResult = post.html ? readingTime(striptags(post.html) || '') : undefined;
-      const relatedPosts = getRelatedPosts(posts, post);
+      const relatedPosts = getRelatedNewsPosts(posts, post);
 
       // for news articles showing more in the card we truncate the
       const prieviewHtml = post.html ? extractPreview(post.html) : undefined;
@@ -57,7 +58,7 @@ export const filterPosts = (posts: BlogPost[]) => {
 
 // #region Unexported Functions
 
-const getRelatedPosts = (posts: BlogPost[], post: BlogPost) => {
+const getRelatedNewsPosts = (posts: BlogPost[], post: BlogPost) => {
   // Get the first 3 posts that have the highest number of tags in common
   const relatedPosts = posts
     .filter((p) => !p.hidden && p.slug !== post.slug)

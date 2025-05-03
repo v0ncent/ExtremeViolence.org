@@ -5,25 +5,24 @@
 	import type { BlogPost } from '$lib/utils/types';
 
 	export let data: {
-		posts: BlogPost[];
-		//comics: BlogPost[];
+		newsposts: BlogPost[];
 	};
 
-	let { posts } = data;
+	let { newsposts } = data;
 </script>
 
 <div class="layout-container">
 	<div class="left-column">
-		{#if posts && posts.length > 0}
-			<NewsSection {posts} />
+		{#if newsposts && newsposts.length > 0}
+			<NewsSection {newsposts} />
 			<br />
-			<RecentPostings {posts} />
+			<RecentPostings {newsposts} />
 		{/if}
 	</div>
 
 	<div class="right-column">
-		{#if posts && posts.length > 0}
-			<LatestComics posts={posts} />
+		{#if newsposts && newsposts.length > 0}
+			<LatestComics posts={newsposts} />
 		{/if}
 	</div>
 </div>

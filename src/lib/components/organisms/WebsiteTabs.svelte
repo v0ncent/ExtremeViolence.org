@@ -4,7 +4,7 @@
     const tabs = [
       { label: 'News', href: '/' },
       { label: 'Gallery', href: '/gallery' },
-      { label: 'Comics', href: '/contact' },
+      { label: 'Comics', href: '/comics' },
       { label: 'About', href: '/about' }
     ];
   </script>

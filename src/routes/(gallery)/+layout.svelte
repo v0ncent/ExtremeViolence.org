@@ -14,26 +14,6 @@
 	let metaKeywords = keywords;
 </script>
 
-<svelte:head>
-	{#if post}
-		<meta name="keywords" content={metaKeywords.join(', ')} />
-
-		<meta name="description" content={post.excerpt} />
-		<meta property="og:description" content={post.excerpt} />
-		<meta name="twitter:description" content={post.excerpt} />
-		<link rel="canonical" href="{siteBaseUrl}/{post.slug}" />
-
-		<title>{post.title} - {title}</title>
-		<meta property="og:title" content="{post.title} - {title}" />
-		<meta name="twitter:title" content="{post.title} - {title}" />
-
-		{#if post.coverImage}
-			<meta property="og:image" content="{siteBaseUrl}{post.coverImage}" />
-			<meta name="twitter:image" content="{siteBaseUrl}{post.coverImage}" />
-		{/if}
-	{/if}
-</svelte:head>
-
 <div class="article-layout">
 	<Header showBackground />
 
@@ -41,19 +21,18 @@
 
 	<main>
 		<article id="article-content">
-			<div class="header">
-				{#if post}
-					<h1>{post.title}</h1>
-					<div class="note">{dateformat(post.date, 'UTC:dd mmmm yyyy')}</div>
-					{#if post.updated}
-						<div class="note">Last updated: {dateformat(post.updated, 'UTC:dd mmmm yyyy')}</div>
-					{/if}
-				{/if}
-			</div>
 			{#if post && post.coverImage}
 				<div class="cover-image">
 					<Image src={post.coverImage} alt={post.title} />
 				</div>
+
+				<div class="header">
+					{#if post}
+						<h1>{post.title}</h1>
+						<p>by Vincent Banks</p>
+					{/if}
+				</div>
+
 			{/if}
 			<div class="content">
 				<slot />
@@ -116,22 +95,21 @@
 		}
 
 		.cover-image {
-			width: min(var(--main-column-width), 100%);
+			width: flex;
 			margin: 0 auto;
-			max-height: 400px;
+			max-height: flex;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;
 
 			img {
-				width: 100%;
-				height: 100%;
-				max-height: 400px;
-				object-fit: cover;
+				width: flex;
+				height: flex;
+				max-height: flex;
 			}
 		}
 
 		:global(.cover-image img) {
-			max-height: 400px;
+			max-height: flex;
 			object-fit: cover;
 		}
 

@@ -3,7 +3,7 @@
 	import ContentSection from '$lib/components/organisms/ContentSection.svelte';
 	import type { BlogPost } from '$lib/utils/types';
 	
-	export let newsposts: BlogPost[];
+	export let galleryposts: BlogPost[];
 </script>
 
 <ContentSection
@@ -12,7 +12,7 @@
 	align="left"
 >
 	<div class="grid">
-		{#each newsposts as post}
+		{#each galleryposts as post}
 			<BlogPostCard
 				slug={post.slug}
 				title={post.title}

@@ -6,9 +6,11 @@
 
 	export let data: {
 		newsposts: BlogPost[];
+		galleryposts: BlogPost[];
 	};
 
-	let { newsposts } = data;
+
+	let { newsposts, galleryposts } = data;
 </script>
 
 <div class="layout-container">
@@ -16,9 +18,9 @@
 		{#if newsposts && newsposts.length > 0}
 			<NewsSection {newsposts} />
 			<br />
-			<RecentPostings {newsposts} />
+			<RecentPostings {galleryposts} />
 		{/if}
-	</div>
+	</div>	
 
 	<div class="right-column">
 		{#if newsposts && newsposts.length > 0}
@@ -35,8 +37,8 @@
 		gap: 32px;
 		padding: 32px;
 
-		max-width: 1200px; // 👈 NEW
-		margin: 0 auto; // 👈 NEW (centers the container)
+		max-width: 1200px; 
+		margin: 0 auto; 
 
 		@include for-phone-only {
 			grid-template-columns: 1fr;

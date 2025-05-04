@@ -40,7 +40,6 @@ export const filterPosts = (posts: BlogPost[]) => {
           : 0
     )
     .map((post) => {
-
       const readingTimeResult = post.html ? readingTime(striptags(post.html) || '') : undefined;
       const relatedPosts = getRelatedNewsPosts(posts, post);
 

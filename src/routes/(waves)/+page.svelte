@@ -6,11 +6,12 @@
 
 	export let data: {
 		newsposts: BlogPost[];
-		galleryposts: BlogPost[];
+		galleryandcomicposts: BlogPost[];
+		comicposts: BlogPost[];
 	};
 
 
-	let { newsposts, galleryposts } = data;
+	let { newsposts, galleryandcomicposts, comicposts } = data;
 </script>
 
 <div class="layout-container">
@@ -18,13 +19,16 @@
 		{#if newsposts && newsposts.length > 0}
 			<NewsSection {newsposts} />
 			<br />
-			<RecentPostings {galleryposts} />
+		{/if}
+
+		{#if galleryandcomicposts && galleryandcomicposts.length > 0}
+			<RecentPostings {galleryandcomicposts} />
 		{/if}
 	</div>	
 
 	<div class="right-column">
-		{#if newsposts && newsposts.length > 0}
-			<LatestComics posts={newsposts} />
+		{#if comicposts && comicposts.length > 0}
+			<LatestComics posts={comicposts} />
 		{/if}
 	</div>
 </div>

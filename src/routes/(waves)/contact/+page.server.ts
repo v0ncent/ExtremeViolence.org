@@ -19,7 +19,7 @@ export const actions: Actions = {
         service: 'gmail',
         auth: {
           user: env.CONTACT_EMAIL,
-          pass: env.CONTACT_EMAIL_PASS, // App Password required
+          pass: env.CONTACT_EMAIL_PASS, 
         },
       });
 

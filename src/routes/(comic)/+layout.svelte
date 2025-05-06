@@ -3,14 +3,11 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 
-	import { keywords } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
 
 	export let data: { post: BlogPost };
 	$: ({ post } = data);
-
-	let metaKeywords = keywords;
 </script>
 
 <div class="article-layout">
@@ -22,13 +19,13 @@
 		<article id="article-content">
 			{#if post && post.coverImage}
 				<div class="cover-image">
-					<Image src={post.coverImage} alt={post.title} />
+					<Image src={post.coverImage} alt={post.title} link={post.slug}/>
 				</div>
 
 				<div class="header">
 					{#if post}
 						<h1>{post.title}</h1>
-						<p>by Vincent Banks</p>
+						<p>Click to read!</p>
 					{/if}
 				</div>
 

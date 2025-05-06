@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
+	import { goto } from '$app/navigation'; // Optional if you want to handle navigation in a function
 
 	export let src: string;
 	export let alt: string;
@@ -7,6 +8,8 @@
 
 	export let formats: string[] = ['avif', 'webp', 'png'];
 	export let widths: string[] | undefined = undefined;
+
+	export let link: string | undefined = undefined;
 
 	$: fileName = src.split('.')[0];
 
@@ -37,12 +40,25 @@
 	}
 </script>
 
-<img srcset={buildSrcset()} {src} {alt} loading="lazy" decoding="async" class:full-bleed={fullBleed} />
+{#if link}
+	<a href={link}>
+		<img srcset={buildSrcset()} {src} {alt} loading="lazy" decoding="async" class:full-bleed={fullBleed} />
+	</a>
+{:else}
+	<img srcset={buildSrcset()} {src} {alt} loading="lazy" decoding="async" class:full-bleed={fullBleed} />
+{/if}
 
 <style lang="scss">
 	img {
 		width: 100%;
 		height: 100%;
 		object-fit: contain;
+		cursor: pointer; // optional for visual feedback
+	}
+
+	a {
+		display: block;
+		text-decoration: none;
 	}
 </style>
+

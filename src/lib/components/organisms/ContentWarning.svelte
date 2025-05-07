@@ -6,7 +6,7 @@
 <div class="modal-backdrop">
 	<div class="modal">
 		<h2>Content Warning</h2>
-		<p>This site contains mature content and is not intended for minors. Viewer discretion is advised...</p>
+		<p>This website contains graphic, macabre, and sexually explicit content. Viewer discretion is advised and is not for minors. If such material is not for you, please do not proceed.</p>
 		<button on:click={onAccept}>I Understand and Wish to Proceed</button>
 	</div>
 </div>

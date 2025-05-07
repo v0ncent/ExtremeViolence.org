@@ -4,11 +4,13 @@
 	import type { BlogPost } from '$lib/utils/types';
 	
 	export let newsposts: BlogPost[];
+	export let sectiontitle: string;
+	export let sectionid: string;
 </script>
 
 <ContentSection
-	id="recent-news"
-	title="News"
+	id={sectionid}
+	title= {sectiontitle}
 	align="left"
 >
 	<div class="grid">

@@ -35,7 +35,7 @@
 	<div class="layout-container">
 		<div class="left-column">
 			{#if newsposts && newsposts.length > 0}
-				<NewsSection {newsposts} />
+				<NewsSection {newsposts} sectiontitle="Recent News" sectionid="recent-news"/>
 				<br />
 			{/if}
 

@@ -2,7 +2,7 @@
     import TabList from "../molecules/Tabs.svelte";
   
     const tabs = [
-      { label: 'News', href: '/' },
+      { label: 'News', href: '/news' },
       { label: 'Gallery', href: '/gallery' },
       { label: 'Comics', href: '/comics' },
       { label: 'About', href: '/about' }

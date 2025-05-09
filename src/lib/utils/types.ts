@@ -36,5 +36,5 @@ export type BlogPost = {
   prieviewHtml: string,
   html: string | undefined,
   relatedPosts: BlogPost[],
-  coverImage: string | undefined
+  coverImage: string
 }

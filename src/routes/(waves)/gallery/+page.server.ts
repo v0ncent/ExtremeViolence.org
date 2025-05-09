@@ -1,7 +1,9 @@
-import { filteredGalleryPosts } from '$lib/data/blog-posts';
+import { filteredGalleryPosts, allGalleryPosts } from '$lib/data/blog-posts';
+
+const posts = filteredGalleryPosts.slice(0, allGalleryPosts.length)
 
 export async function load() {
   return {
-    newsPosts: filteredGalleryPosts
+    galleryposts: posts
   };
 }

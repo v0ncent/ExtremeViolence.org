@@ -3,7 +3,7 @@
   
     const tabs = [
       { label: 'News', href: '/news' },
-      { label: 'Gallery', href: '/gallery' },
+      { label: 'Gallery', href: '/gallery-section' },
       { label: 'Comics', href: '/comics' },
       { label: 'About', href: '/about' }
     ];

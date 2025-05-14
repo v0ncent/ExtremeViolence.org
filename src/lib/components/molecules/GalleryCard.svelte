@@ -21,7 +21,7 @@
 	.gallery-card {
 		box-sizing: border-box;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-		width: auto;
+		width: flex;
 		break-inside: avoid;
 	}
 

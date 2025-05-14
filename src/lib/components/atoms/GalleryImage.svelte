@@ -44,8 +44,8 @@
 		<a href={link}>
 			<img
 				srcset={buildSrcset()}
-				src={src}
-				alt={alt}
+				{src}
+				{alt}
 				loading="lazy"
 				decoding="async"
 				class:full-bleed={fullBleed}
@@ -54,8 +54,8 @@
 	{:else}
 		<img
 			srcset={buildSrcset()}
-			src={src}
-			alt={alt}
+			{src}
+			{alt}
 			loading="lazy"
 			decoding="async"
 			class:full-bleed={fullBleed}
@@ -65,17 +65,21 @@
 
 <style lang="scss">
 	.image-wrapper {
-		width: auto;
+		width: flex;
+		height: flex;
 		display: block;
 		overflow: hidden;
+		max-height: flex;
 	}
 
 	img {
 		object-fit: cover;
-		width: auto;
-		height: auto;
+		width: flex;
+		height: flex;
 		display: block;
+		max-height: flex;
 	}
+
 	a {
 		display: block;
 		text-decoration: none;

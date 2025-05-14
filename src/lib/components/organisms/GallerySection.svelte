@@ -3,18 +3,34 @@
 	import GalleryCard from '../molecules/GalleryCard.svelte';
 
 	export let posts: BlogPost[];
+
+	type Size = 'small' | 'medium' | 'large';
+
+	function getSizeFromResolution(width: number, height: number): Size {
+		const resolution = width * height;
+
+		if (resolution >= 2000000) return 'large';     // 2MP+
+		if (resolution >= 800000) return 'medium';     // ~0.8MP+
+		return 'small';
+	}
+
+	let sizedPosts = posts.map(post => {
+		const size = getSizeFromResolution(post.width, post.height);
+		return { ...post, size };
+	});
 </script>
 
-<section class="gallery-section">
-	{#each posts as post}
-		<GalleryCard {post} />
+<section class="gallery-grid">
+	{#each sizedPosts as post}
+		<GalleryCard {post} size={post.size} />
 	{/each}
 </section>
 
 <style>
-	.gallery-section {
-		column-count: 3;
-		column-gap: 1rem;
-		padding: 1rem 0;
+	.gallery-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		gap: 1rem;
+		grid-auto-flow: dense;
 	}
 </style>

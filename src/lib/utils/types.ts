@@ -14,7 +14,7 @@ export type TagType = {
 }
 
 export type SocialLink = {
-  
+
 }
 
 export type Feature = {
@@ -37,4 +37,6 @@ export type BlogPost = {
   html: string | undefined,
   relatedPosts: BlogPost[],
   coverImage: string
+  width: number; 
+  height: number; 
 }

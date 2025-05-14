@@ -38,6 +38,11 @@
 			I will draw <strong>nothing involving minors or children being hurt or abused</strong> unless there
 			is an artistic / narrative reasoning.
 		</li>
+			I will draw<strong>nothing involving animals being hurt or abused</strong> unless there is an
+			artistic / narrative reasoning. (beastiality is a hard no!)
+		<li>
+			I will <strong>not draw anything involving scat or feces</strong>.
+		</li>
 		<li>
 			I will <strong>absolutely not draw minors in a sexually suggestive or sexual context</strong> whatsoever.
 		</li>
@@ -45,8 +50,9 @@
 			I will <strong>not draw anything involving scat or feces</strong>.
 		</li>
 		<li>
-			I will draw <strong>nothing involving fetish content where the turn-on is non-consensual
-			suffering.</strong> 
+			I will draw <strong
+				>nothing involving fetish content where the turn-on is non-consensual suffering.</strong
+			>
 		</li>
 		<li>
 			<strong>I have the right to deny any request</strong> that makes me uncomfortable.

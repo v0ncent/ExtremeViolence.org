@@ -9,8 +9,8 @@
 	function getSizeFromResolution(width: number, height: number): Size {
 		const resolution = width * height;
 
-		if (resolution >= 2000000) return 'large';     // 2MP+
-		if (resolution >= 800000) return 'medium';     // ~0.8MP+
+		if (resolution >= 1290282) return 'large';     // 2MP+
+		if (resolution >= 1290282 / 2) return 'medium';     // ~0.8MP+
 		return 'small';
 	}
 

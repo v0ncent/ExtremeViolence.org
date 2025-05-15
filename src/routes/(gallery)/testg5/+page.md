@@ -1,11 +1,11 @@
 ---
-title: Test Gallery Submission
+title: Fourth
 slug: testg5
-coverImage: /images/gallery/GAHHHHHHHHHHHHHHHHHHHH.jpg
-date: 2023-05-03T05:32:34Z
+coverImage: images/gallery/Captain.JPG
+date: 1994-05-03T05:32:34Z
 excerpt: Gallery Post
-width: 1302
-height: 991 
+width: 870
+height: 1086 
 tags:
   - gallery
 ---

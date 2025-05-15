@@ -1,11 +1,11 @@
 ---
-title: Test Gallery Submission
+title: sixth
 slug: testsubmission
-coverImage: /images/gallery/GAHHHHHHHHHHHHHHHHHHHH.jpg
-date: 2028-05-03T05:32:34Z
+coverImage: images/gallery/Depression drawing 1.jpg
+date: 1996-05-03T05:32:34Z
 excerpt: Gallery Post
-width: 1302
-height: 991 
+width: 2224
+height: 1668 
 tags:
   - gallery
 ---

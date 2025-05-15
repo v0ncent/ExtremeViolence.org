@@ -1,11 +1,11 @@
 ---
-title: Test Gallery Submission
+title: Third
 slug: testg4
-coverImage: /images/gallery/GAHHHHHHHHHHHHHHHHHHHH.jpg
-date: 2023-05-03T05:32:34Z
+coverImage: /images/gallery/bannerIllustration(inprog).jpg
+date: 1993-05-03T05:32:34Z
 excerpt: Gallery Post
-width: 1302
-height: 991 
+width: 2459
+height: 820 
 tags:
   - gallery
 ---

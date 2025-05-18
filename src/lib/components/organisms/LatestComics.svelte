@@ -4,10 +4,12 @@
 	import type { BlogPost } from '$lib/utils/types';
 
 	export let posts: BlogPost[];
+	export let layout: 'stacked' | 'grid' = 'stacked'; // default is stacked
+	export let sectiontitle: string;
 </script>
 
-<ContentSection id="latest-comics" title="Latest Comics" align="left">
-	<div class="grid">
+<ContentSection id="latest-comics" title={sectiontitle} align="left">
+	<div class="grid {layout}">
 		{#each posts as post}
 			<BlogPostCard
 				slug={post.slug}
@@ -25,12 +27,20 @@
 	@import '$lib/scss/breakpoints.scss';
 
 	.grid {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
+		&.stacked {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
 
-		@include for-phone-only {
-			grid-template-columns: 1fr;
+		&.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+			gap: 1.5rem;
+
+			@include for-phone-only {
+				grid-template-columns: 1fr;
+			}
 		}
 	}
 </style>

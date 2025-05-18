@@ -46,7 +46,7 @@
 
 		<div class="right-column">
 			{#if comicposts && comicposts.length > 0}
-				<LatestComics posts={comicposts} />
+				<LatestComics posts={comicposts} sectiontitle="Latest Comics"/>
 			{/if}
 		</div>
 	</div>

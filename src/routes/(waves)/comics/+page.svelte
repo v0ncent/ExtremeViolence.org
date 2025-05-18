@@ -1,7 +1,7 @@
 <script lang="ts">
-	import LatestComics from '$lib/components/organisms/LatestComics.svelte';
+	import ComicsSection from '$lib/components/organisms/ComicsSection.svelte';
 	import type { BlogPost } from '$lib/utils/types';
-	
+
 	export let data: {
 		comicPosts: BlogPost[];
 	};
@@ -11,17 +11,7 @@
 
 <svelte:head>
 	<title>Latest Comics</title>
-	<meta name="description" content="Check out our latest comics and graphic stories." />
+	<meta name="description" content="Latest comics from Vincent Banks!" />
 </svelte:head>
 
-<section class="comics-page">
-	<LatestComics {posts} layout="grid" sectiontitle="Comics"/>
-</section>
-
-<style lang="scss">
-	.comics-page {
-		padding: 2rem 1rem;
-		max-width: 1200px;
-		margin: 0 auto;
-	}
-</style>
+<ComicsSection {posts} />

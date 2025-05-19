@@ -63,13 +63,6 @@
 		font-weight: 700;
 	}
 
-	.tags {
-		display: flex;
-		align-items: center;
-		gap: 5px;
-		flex-wrap: wrap;
-	}
-
 	.note {
 		font-size: 0.8rem;
 		color: rgba(var(--color--text-rgb), 0.8);
@@ -78,7 +71,7 @@
 	.text {
 		margin-top: 5px;
 		font-size: 1rem;
-		text-align: justify;
+		text-align: center;
 		font-weight: bold;
 	}
 
@@ -104,7 +97,7 @@
 		font-size: 0.8rem;
 
 		.image img {
-			height: 120px; // smaller image if needed
+			height: auto; // smaller image if needed
 		}
 
 		.title {

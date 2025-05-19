@@ -6,7 +6,6 @@
 </script>
 
 <section class="comics-grid-section">
-	<h2 class="title">Comics</h2>
 	<div class="grid">
 		{#each posts as post}
 			<BlogPostCard
@@ -15,7 +14,7 @@
 				excerpt={post.excerpt}
 				coverImage={post.coverImage}
 				showImage={true}
-				small={true}
+				small={false}
 			/>
 		{/each}
 	</div>
@@ -32,6 +31,7 @@
 		.title {
 			font-size: 2rem;
 			margin-bottom: 1.5rem;
+			text-align: center;
 		}
 
 		.grid {

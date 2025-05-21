@@ -1,7 +1,6 @@
 <script lang="ts">
 	export let src: string;
 	export let alt: string = 'Site logo';
-	export let height: string = '28px'; // default height, override if needed
 </script>
 
 <div class="logo">
@@ -12,20 +11,20 @@
 	@import '$lib/scss/breakpoints.scss';
 
 	.logo {
-		align-items: left;
-		justify-content: left;
-		gap: 19px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		height: 100%;
-
-		@include for-phone-only {
-			gap: 8px;
-		}
 	}
 
 	.logo-image {
-		height: var(--logo-height, 450px);
-		max-height: 300%;
+		height: auto;
+		max-height: 125px;
 		width: auto;
 		display: block;
+
+		@include for-phone-only {
+			max-height: 30px;
+		}
 	}
 </style>

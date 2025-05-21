@@ -1,13 +1,12 @@
 <script lang="ts">
 	import Logo from '$lib/components/atoms/Logo.svelte';
-	
 	export let showBackground = false;
 </script>
 
 <header class:has-background={showBackground}>
 	<nav class="container">
 		<a class="logo" href="/" aria-label="Site logo">
-			<Logo src="/images/site-assets/El-Logo-B.png" alt="Extreme Violence Logo"/>
+			<Logo src="/images/site-assets/El-Logo-B.png" alt="Extreme Violence Logo" />
 		</a>
 	</nav>
 </header>
@@ -17,9 +16,12 @@
 
 	header {
 		position: relative;
-		padding: 110px 0;
+		height: 200px;
+		display: flex;
+		align-items: center;
 
 		@include for-phone-only {
+			height: auto;
 			padding: 20px 0;
 		}
 
@@ -33,8 +35,10 @@
 
 		.container {
 			display: flex;
-			align-items: center;
+			align-items: left;
+			justify-content: space-between;
 			gap: 30px;
+			width: 100%;
 
 			@include for-phone-only {
 				.links {
@@ -46,8 +50,9 @@
 		}
 
 		.logo {
-			height: 40px;
 			flex: 1;
+			display: flex;
+			align-items: center;
 		}
 
 		a {

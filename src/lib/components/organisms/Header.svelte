@@ -7,7 +7,7 @@
 <header class:has-background={showBackground}>
 	<nav class="container">
 		<a class="logo" href="/" aria-label="Site logo">
-			<Logo />
+			<Logo src="/images/site-assets/El-Logo-B.png" alt="Extreme Violence Logo"/>
 		</a>
 	</nav>
 </header>
@@ -46,7 +46,7 @@
 		}
 
 		.logo {
-			height: 44px;
+			height: 40px;
 			flex: 1;
 		}
 

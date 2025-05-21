@@ -9,18 +9,18 @@
 	export let readingTime: string | undefined = undefined;
 
 	export let showImage = true;
-
 	export let small: boolean = false;
-
 	export let previewHtml: string | undefined = undefined;
 </script>
 
 <Card
 	href="/{slug}"
 	target="_self"
-	additionalClass="blog-post-card {!showImage || !coverImage ? 'no-image' : ''} {small
-		? 'small'
-		: ''}"
+	withBorder={!small}
+	textAlign={small ? 'center' : 'left'}
+	additionalClass={`blog-post-card ${!showImage || !coverImage ? 'no-image' : ''} ${
+		small ? 'small' : ''
+	}`}
 >
 	<div class="image" slot="image">
 		{#if coverImage}
@@ -28,16 +28,12 @@
 		{/if}
 	</div>
 	<div class="content" slot="content">
-		<p class="title">
-			{title}
-		</p>
+		<p class="title">{title}</p>
 		{#if readingTime}
 			<div class="note">{readingTime}</div>
 		{/if}
 		{#if excerpt}
-			<p class="text">
-				{excerpt}
-			</p>
+			<p class="text">{excerpt}</p>
 		{/if}
 		{#if previewHtml}
 			<div class="preview">{@html previewHtml}</div>
@@ -88,20 +84,50 @@
 		object-fit: cover;
 	}
 
+	:global(.blog-post-card.small .image) {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+		height: 300px;
+		overflow: hidden;
+		background: transparent;
+	}
+
+	:global(.blog-post-card.small .image img) {
+		max-height: 100%;
+		max-width: 100%;
+		object-fit: contain !important;
+		display: block;
+		margin: auto;
+	}
+
 	:global(.blog-post-card.no-image > .image) {
 		display: none;
 	}
 
 	:global(.blog-post-card.small) {
-		padding: 8px;
 		font-size: 0.8rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
 
-		.image img {
-			height: auto; // smaller image if needed
+		.image {
+			height: 300px;
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		.content {
+			align-items: center;
 		}
 
 		.title {
 			font-size: 1rem;
+			justify-content: center;
 		}
 
 		.text {

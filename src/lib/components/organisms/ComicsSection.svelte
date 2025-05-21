@@ -14,7 +14,7 @@
 				excerpt={post.excerpt}
 				coverImage={post.coverImage}
 				showImage={true}
-				small={false}
+				small={true}
 			/>
 		{/each}
 	</div>

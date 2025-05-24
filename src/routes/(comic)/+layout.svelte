@@ -19,16 +19,14 @@
 		<article id="article-content">
 			{#if post && post.coverImage}
 				<div class="cover-image">
-					<Image src={post.coverImage} alt={post.title} link={post.slug}/>
-				</div>
-
-				<div class="header">
-					{#if post}
-						<h1>{post.title}</h1>
-						<p>Click to read!</p>
+					{#if post.tags && post.tags.includes('comic')}
+						<a href={`/${post.slug}/viewer`}>
+							<Image src={post.coverImage} alt={post.title} />
+						</a>
+					{:else}
+						<Image src={post.coverImage} alt={post.title} link={post.slug} />
 					{/if}
 				</div>
-
 			{/if}
 			<div class="content">
 				<slot />
@@ -91,16 +89,18 @@
 		}
 
 		.cover-image {
-			width: flex;
 			margin: 0 auto;
-			max-height: flex;
+			max-width: 800px; // or any appropriate width for your design
+			width: 100%;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;
+			overflow: hidden;
 
 			img {
-				width: flex;
-				height: flex;
-				max-height: flex;
+				width: 100%;
+				height: auto;
+				display: block;
+				object-fit: cover;
 			}
 		}
 

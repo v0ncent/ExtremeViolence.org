@@ -1,9 +1,14 @@
 <script lang="ts">
-	export let data: { slug: string };
+	export let data: {
+		slug: string;
+		title: string;
+		coverImage: string;
+	};
+
+	import { onMount } from 'svelte';
 
 	let imageUrls: string[] = [];
 	let loading = true;
-
 	const MAX_PAGES = 50;
 
 	async function checkImageExists(url: string): Promise<boolean> {
@@ -15,32 +20,18 @@
 		}
 	}
 
-	import { onMount } from 'svelte';
-
 	onMount(async () => {
-		const slug = data.slug;
-
-		if (!slug) {
-			console.error('Slug is empty or undefined');
-			loading = false;
-			return;
-		}
-
 		for (let i = 1; i <= MAX_PAGES; i++) {
-			const imgPath = `/comics/${slug}/${i}.jpg`;
-			const exists = await checkImageExists(imgPath);
-
-			if (!exists) break;
-
+			const imgPath = `/comics/${data.slug}/${i}.jpg`;
+			if (!(await checkImageExists(imgPath))) break;
 			imageUrls.push(imgPath);
 		}
-
 		loading = false;
 	});
 </script>
 
 <svelte:head>
-	<title>Read Comic: {data.slug}</title>
+	<title>{data.title}</title>
 </svelte:head>
 
 <div class="comic-viewer">

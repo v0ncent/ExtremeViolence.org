@@ -49,6 +49,7 @@
     "@fontsource/inter": "^4.5.15",
     "@fontsource/merriweather": "^4.5.14",
     "@fontsource/ubuntu-mono": "^4.5.11",
+    "gray-matter": "^4.0.3",
     "html-truncate": "^1.2.2",
     "nodemailer": "^6.10.1"
   }

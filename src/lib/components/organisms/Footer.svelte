@@ -1,10 +1,10 @@
 <footer>
 	<div class="content">
 		<div class="section">
-			<a href="/News" class="button">News</a>
-			<a href="/Gallery" class="button">Gallery</a>
-			<a href="/Comics" class="button">Comics</a>
-			<a href="/About" class="button">About</a>
+			<a href="/news" class="button">News</a>
+			<a href="/gallery-section" class="button">Gallery</a>
+			<a href="/comics" class="button">Comics</a>
+			<a href="/about" class="button">About</a>
 		</div>
 
 		<div class="section">

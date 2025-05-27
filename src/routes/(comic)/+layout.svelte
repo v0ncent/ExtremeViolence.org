@@ -18,15 +18,9 @@
 	<main>
 		<article id="article-content">
 			{#if post && post.coverImage}
-				<div class="cover-image">
-					{#if post.tags && post.tags.includes('comic')}
-						<a href={`/${post.slug}/viewer`}>
-							<Image src={post.coverImage} alt={post.title} />
-						</a>
-					{:else}
-						<Image src={post.coverImage} alt={post.title} link={post.slug} />
-					{/if}
-				</div>
+				<a href={`/${post.slug}/viewer`} class="cover-image">
+					<Image src={post.coverImage} alt={post.title} />
+				</a>
 			{/if}
 			<div class="content">
 				<slot />

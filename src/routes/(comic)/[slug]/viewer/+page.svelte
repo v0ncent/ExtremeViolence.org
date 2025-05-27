@@ -3,32 +3,45 @@
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 
-	let slug: string = '';
+	let slug = '';
 	let images: string[] = [];
+	let currentIndex = 0;
 
 	const MAX_PAGES = 50;
 
-	async function preloadImages(slug: string) {
-		for (let i = 1; i <= MAX_PAGES; i++) {
-			const imagePath = `/images/comics/${slug}/${i}.jpg`;
-
-			const exists = await imageExists(imagePath);
-
-			if (exists) {
-				images.push(imagePath);
-			} else {
-				break; // stop loading further images once a page is missing
-			}
-		}
-	}
-
-	async function imageExists(url: string): Promise<boolean> {
+	async function imageExists(url: string) {
 		try {
 			const res = await fetch(url, { method: 'HEAD' });
 			return res.ok;
-		} catch (e) {
+		} catch {
 			return false;
 		}
+	}
+
+	async function preloadImages(slug: string) {
+		const tempImages: string[] = [];
+
+		for (let i = 1; i <= MAX_PAGES; i++) {
+			const imagePath = `/images/comics/${slug}/${i}.jpg`;
+			const exists = await imageExists(imagePath);
+
+			if (exists) {
+				tempImages.push(imagePath);
+			} else {
+				break;
+			}
+		}
+
+		images = tempImages;
+		currentIndex = 0; // reset to first page
+	}
+
+	function prevPage() {
+		if (currentIndex > 0) currentIndex--;
+	}
+
+	function nextPage() {
+		if (currentIndex < images.length - 1) currentIndex++;
 	}
 
 	onMount(async () => {
@@ -38,22 +51,25 @@
 	});
 </script>
 
-
 <svelte:head>
 	<title>{slug} - Comic Viewer</title>
 </svelte:head>
 
-<div class="comic-viewer">
-	{#each images as image}
+<div class="comic-reader">
+	{#if images.length > 0}
 		<img
-			src={image}
-			alt="Comic Page"
-			loading="lazy"
-			on:error={() => {
-				images = images.slice(0, images.indexOf(image));
-			}}
+			src={images[currentIndex]}
+			alt={`Comic Page ${currentIndex + 1}`}
+			class="comic-page"
 		/>
-	{/each}
+		<div class="controls">
+			<button on:click={prevPage} disabled={currentIndex === 0}>⬅ Prev</button>
+			<span>Page {currentIndex + 1} of {images.length}</span>
+			<button on:click={nextPage} disabled={currentIndex === images.length - 1}>Next ➡</button>
+		</div>
+	{:else}
+		<p>Loading comic pages...</p>
+	{/if}
 </div>
 
 <style>
@@ -64,21 +80,45 @@
 		font-family: system-ui, sans-serif;
 	}
 
-	.comic-viewer {
+	.comic-reader {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		background: white;
+		justify-content: center;
 		padding: 2rem 1rem;
+		background: #000;
+		min-height: 100vh;
 	}
 
-	img {
+	.comic-page {
 		width: 100%;
 		max-width: 960px;
 		height: auto;
-		margin-bottom: 2rem;
 		background: #111;
 		border-radius: 6px;
 		box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+		margin-bottom: 2rem;
+	}
+
+	.controls {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	button {
+		background: white;
+		color: black;
+		border: none;
+		padding: 0.6rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+		font-weight: bold;
+		transition: background 0.2s;
+	}
+
+	button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 </style>

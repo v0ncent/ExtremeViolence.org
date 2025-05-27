@@ -18,7 +18,12 @@
 	<main>
 		<article id="article-content">
 			{#if post && post.coverImage}
-				<a href={`/${post.slug}/viewer`} class="cover-image">
+				<a
+					href={`/${post.slug}/viewer`}
+					class="cover-image"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
 					<Image src={post.coverImage} alt={post.title} />
 				</a>
 			{/if}

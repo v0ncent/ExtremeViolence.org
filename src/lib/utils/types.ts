@@ -39,4 +39,5 @@ export type BlogPost = {
   coverImage: string
   width: number; 
   height: number; 
+  series: boolean;
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
@@ -9,20 +8,16 @@
 
 	export let data: { post: BlogPost };
 	$: ({ post } = data);
-
-	// Determine if we are on a viewer page
-	$: hideLayout = $page.url.pathname.endsWith('/viewer');
 </script>
 
 <div class="article-layout">
-	{#if !hideLayout}
-		<Header showBackground />
-		<WebsiteTabs />
-	{/if}
+	<Header showBackground />
+
+	<WebsiteTabs />
 
 	<main>
 		<article id="article-content">
-			{#if !hideLayout && post && post.coverImage}
+			{#if post && post.coverImage}
 				<a
 					href={`/${post.slug}/viewer`}
 					class="cover-image"
@@ -38,9 +33,7 @@
 		</article>
 	</main>
 
-	{#if !hideLayout}
-		<Footer />
-	{/if}
+	<Footer />
 </div>
 
 <style lang="scss">
@@ -96,7 +89,7 @@
 
 		.cover-image {
 			margin: 0 auto;
-			max-width: 800px;
+			max-width: 800px; // or any appropriate width for your design
 			width: 100%;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;

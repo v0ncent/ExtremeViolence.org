@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
@@ -7,8 +6,22 @@
 	import type { BlogPost } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
 
+	import { onMount } from 'svelte';
+
 	export let data: { post: BlogPost };
 	$: ({ post } = data);
+
+	let chapters: string[] = [];
+
+	onMount(async () => {
+		if (post.series) {
+			const res = await fetch(`/api/chapters/${post.slug}`);
+			if (res.ok) {
+				const data = await res.json();
+				chapters = data.chapters;
+			}
+		}
+	});
 </script>
 
 <div class="article-layout">
@@ -18,16 +31,54 @@
 
 	<main>
 		<article id="article-content">
-			{#if post && post.coverImage}
+			{#if post && post.series}
+				<!-- Series: Render Chapter List -->
+				{#if chapters.length > 0}
+					<section class="chapter-links">
+						<section class="series-coverimage hover-container">
+							<Image
+								src={`/images/comics/${post.slug}/SeriesCover.jpg`}
+								alt={`Cover of ${post.title}`}
+							/>
+						</section>
+
+						<h2>Chapters</h2>
+						<ul>
+							{#each chapters as chapter}
+								<li>
+									<a
+										href={`/${post.slug}/viewer/${chapter}`}
+										class="cover-image hover-container"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										<Image
+											src={`/images/comics/${post.slug}/${chapter}/1.jpg`}
+											alt={`Cover of ${post.title} - Chapter ${chapter}`}
+										/>
+										<div class="hover-text">Click to read!</div>
+										<span>{chapter}</span>
+									</a>
+								</li>
+							{/each}
+						</ul>
+					</section>
+				{:else}
+					<p>Loading chapters...</p>
+				{/if}
+			{:else if post && post.coverImage}
+				<!-- Non-Series: Render Single Cover Image -->
 				<a
 					href={`/${post.slug}/viewer`}
-					class="cover-image"
+					class="cover-image hover-container"
 					target="_blank"
 					rel="noopener noreferrer"
 				>
 					<Image src={post.coverImage} alt={post.title} />
+					<div class="hover-text">Click to read!</div>
 				</a>
 			{/if}
+
 			<div class="content">
 				<slot />
 			</div>
@@ -39,6 +90,50 @@
 
 <style lang="scss">
 	@import '$lib/scss/_mixins.scss';
+
+	.series-coverimage {
+		max-width: 800px;
+		margin: 0 auto 2rem auto; // added bottom space
+		width: 100%;
+		box-shadow: var(--image-shadow);
+		border-radius: 6px;
+		overflow: hidden;
+	}
+
+	.chapter-links h2 {
+		text-align: center;
+		margin: 2rem 0 1rem;
+		font-size: 2rem;
+	}
+
+	.chapter-links ul {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 20px;
+		padding: 0;
+		list-style: none;
+	}
+
+	.chapter-links li {
+		width: 180px;
+		text-align: center;
+	}
+
+	.chapter-links .cover-image {
+		display: block;
+		box-shadow: var(--image-shadow);
+		border-radius: 6px;
+		overflow: hidden;
+		position: relative;
+	}
+
+	.chapter-links .cover-image img {
+		width: 100%;
+		height: 260px;
+		object-fit: cover;
+		display: block;
+	}
 
 	.article-layout {
 		--body-background-color: var(--color--post-page-background);
@@ -72,40 +167,19 @@
 		flex-direction: column;
 		gap: 30px;
 
-		.header {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			text-align: center;
-			gap: 10px;
-			width: min(var(--main-column-width), 100%);
-			margin: 0 auto;
-
-			.note {
-				font-size: 90%;
-				color: rgba(var(--color--text-rgb), 0.8);
-			}
-		}
-
 		.cover-image {
 			margin: 0 auto;
-			max-width: 800px; // or any appropriate width for your design
+			max-width: 800px;
 			width: 100%;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;
 			overflow: hidden;
-
-			img {
-				width: 100%;
-				height: auto;
-				display: block;
-				object-fit: cover;
-			}
+			position: relative;
 		}
 
 		:global(.cover-image img) {
-			max-height: flex;
+			width: 100%;
+			height: auto;
 			object-fit: cover;
 		}
 
@@ -128,13 +202,29 @@
 				margin-right: auto;
 			}
 		}
+	}
 
-		.tags {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 5px;
-			flex-wrap: wrap;
-		}
+	/* Hover effect */
+	.hover-container {
+		position: relative;
+		cursor: pointer;
+	}
+
+	.hover-text {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		background: rgba(0, 0, 0, 0.6);
+		color: white;
+		font-size: 1.2rem;
+		text-align: center;
+		padding: 0.5rem;
+		opacity: 0;
+		transition: opacity 0.3s ease-in-out;
+	}
+
+	.hover-container:hover .hover-text {
+		opacity: 1;
 	}
 </style>

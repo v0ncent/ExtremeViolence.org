@@ -1,10 +1,10 @@
-
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 
 	let slug = '';
+	let isSeries = false;
 	let images: string[] = [];
 	let currentIndex = 0;
 
@@ -48,6 +48,9 @@
 	onMount(async () => {
 		const { params } = get(page);
 		slug = params.slug;
+
+		console.log(params);
+
 		await preloadImages(slug);
 	});
 </script>

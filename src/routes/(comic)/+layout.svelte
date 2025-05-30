@@ -1,29 +1,14 @@
+
 <script lang="ts">
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
+
 	import type { BlogPost } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
-	import { onMount } from 'svelte';
 
-	export let data: { post?: BlogPost };
-	let post: BlogPost | undefined;
-	let chapters: string[] = [];
-
-	$: post = data?.post;
-
-	onMount(async () => {
-		if (post?.series) {
-			try {
-				const res = await fetch(`/images/comics/${post.slug}/`);
-				const text = await res.text();
-				const matches = [...text.matchAll(/href="(chapter[^"]+)\//g)];
-				chapters = matches.map((m) => m[1]);
-			} catch (err) {
-				console.error('Error loading chapters:', err);
-			}
-		}
-	});
+	export let data: { post: BlogPost };
+	$: ({ post } = data);
 </script>
 
 <div class="article-layout">
@@ -33,32 +18,15 @@
 
 	<main>
 		<article id="article-content">
-			{#if post?.coverImage}
-				{#if post.series}
-					<h2>Chapters</h2>
-					<ul>
-						{#each chapters as chapter}
-							<li>
-								<a
-									href={`/${post.slug}/viewer?chapter=${chapter}`}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									{chapter.replace(/chapter/i, 'Chapter ')}
-								</a>
-							</li>
-						{/each}
-					</ul>
-				{:else}
-					<a
-						href={`/${post.slug}/viewer`}
-						class="cover-image"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Image src={post.coverImage} alt={post.title} />
-					</a>
-				{/if}
+			{#if post && post.coverImage}
+				<a
+					href={`/${post.slug}/viewer`}
+					class="cover-image"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<Image src={post.coverImage} alt={post.title} />
+				</a>
 			{/if}
 			<div class="content">
 				<slot />
@@ -122,7 +90,7 @@
 
 		.cover-image {
 			margin: 0 auto;
-			max-width: 800px;
+			max-width: 800px; // or any appropriate width for your design
 			width: 100%;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;

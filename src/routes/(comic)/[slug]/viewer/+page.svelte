@@ -1,72 +1,125 @@
+
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 
 	let slug = '';
-	let isSeries = false;
-	let chapter = '';
 	let images: string[] = [];
+	let currentIndex = 0;
 
-	onMount(async () => {
-		const $page = get(page);
-		const post = $page.data?.post;
-		slug = $page.params.slug;
-		chapter = $page.url.searchParams.get('chapter') || '';
-		isSeries = post?.series ?? false;
+	const MAX_PAGES = 50;
 
-		await loadImages();
-	});
-
-	async function loadImages() {
-		images = [];
-
-		if (isSeries && !chapter) {
-			console.error('Chapter is required for series');
-			return;
+	async function imageExists(url: string) {
+		try {
+			const res = await fetch(url, { method: 'HEAD' });
+			return res.ok;
+		} catch {
+			return false;
 		}
+	}
 
-		let index = 1;
-		while (true) {
-			const path = isSeries
-				? `/images/comics/${slug}/${chapter}/${index}.jpg`
-				: `/images/comics/${slug}/${index}.jpg`;
+	async function preloadImages(slug: string) {
+		const tempImages: string[] = [];
 
-			try {
-				const res = await fetch(path, { method: 'HEAD' });
-				if (!res.ok) break;
-				images.push(path);
-				index++;
-			} catch {
+		for (let i = 1; i <= MAX_PAGES; i++) {
+			const imagePath = `/images/comics/${slug}/${i}.jpg`;
+			const exists = await imageExists(imagePath);
+
+			if (exists) {
+				tempImages.push(imagePath);
+			} else {
 				break;
 			}
 		}
+
+		images = tempImages;
+		currentIndex = 0; // reset to first page
 	}
+
+	function prevPage() {
+		if (currentIndex > 0) currentIndex--;
+	}
+
+	function nextPage() {
+		if (currentIndex < images.length - 1) currentIndex++;
+	}
+
+	onMount(async () => {
+		const { params } = get(page);
+		slug = params.slug;
+		await preloadImages(slug);
+	});
 </script>
 
-{#if images.length > 0}
-	<div class="comic-viewer">
-		{#each images as img}
-			<img src={img} alt="Comic page" loading="lazy" />
-		{/each}
-	</div>
-{:else}
-	<p>No images found. {isSeries ? 'Make sure a valid ?chapter= is provided.' : ''}</p>
-{/if}
+<svelte:head>
+	<title>{slug} - Comic Viewer</title>
+</svelte:head>
+
+<div class="comic-reader">
+	{#if images.length > 0}
+		<img
+			src={images[currentIndex]}
+			alt={`Comic Page ${currentIndex + 1}`}
+			class="comic-page"
+		/>
+		<div class="controls">
+			<button on:click={prevPage} disabled={currentIndex === 0}>⬅ Prev</button>
+			<span>Page {currentIndex + 1} of {images.length}</span>
+			<button on:click={nextPage} disabled={currentIndex === images.length - 1}>Next ➡</button>
+		</div>
+	{:else}
+		<p>Loading comic pages...</p>
+	{/if}
+</div>
 
 <style>
-	.comic-viewer {
+	:global(body) {
+		margin: 0;
+		background-color: #000;
+		color: white;
+		font-family: system-ui, sans-serif;
+	}
+
+	.comic-reader {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 1rem;
-		padding: 2rem;
+		justify-content: center;
+		padding: 2rem 1rem;
+		background: #000;
+		min-height: 100vh;
 	}
 
-	img {
-		max-width: 100%;
+	.comic-page {
+		width: 100%;
+		max-width: 960px;
 		height: auto;
+		background: #111;
 		border-radius: 6px;
-		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+		box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+		margin-bottom: 2rem;
+	}
+
+	.controls {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	button {
+		background: white;
+		color: black;
+		border: none;
+		padding: 0.6rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+		font-weight: bold;
+		transition: background 0.2s;
+	}
+
+	button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 </style>

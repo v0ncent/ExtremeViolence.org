@@ -14,7 +14,7 @@
 			<BlogPostCard
 				slug={post.slug}
 				title={post.title}
-				excerpt={post.excerpt}
+				excerpt={""}
 				coverImage={post.coverImage}
 				showImage={true}
 				small={true}

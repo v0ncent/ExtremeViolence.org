@@ -3,7 +3,7 @@ title: 5
 slug: another-post
 coverImage: /images/posts/Frieren20.PNG
 date: 2023-08-22T21:55:15.361Z
-excerpt: some penis type shit ya feel me
+excerpt: News
 tags:
   - new
 ---

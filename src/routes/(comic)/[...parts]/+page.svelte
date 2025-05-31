@@ -3,8 +3,8 @@
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 
-	let slug = '';
-	let isSeries = false;
+	let imagePathPrefix = '';
+	let title = '';
 	let images: string[] = [];
 	let currentIndex = 0;
 
@@ -12,20 +12,21 @@
 
 	async function imageExists(url: string) {
 		try {
-			const res = await fetch(url, { method: 'HEAD' });
-			return res.ok;
+			const res = await fetch(url);
+			return res.ok && res.headers.get('Content-Type')?.startsWith('image/');;
 		} catch {
 			return false;
 		}
 	}
 
-	async function preloadImages(slug: string) {
+	async function preloadImages(base: string) {
 		const tempImages: string[] = [];
 
 		for (let i = 1; i <= MAX_PAGES; i++) {
-			const imagePath = `/images/comics/${slug}/${i}.jpg`;
-			const exists = await imageExists(imagePath);
+			const imagePath = `${base}/${i}.jpg`;
 
+			const exists = await imageExists(imagePath);
+ 
 			if (exists) {
 				tempImages.push(imagePath);
 			} else {
@@ -34,7 +35,7 @@
 		}
 
 		images = tempImages;
-		currentIndex = 0; // reset to first page
+		currentIndex = 0;
 	}
 
 	function prevPage() {
@@ -47,25 +48,44 @@
 
 	onMount(async () => {
 		const { params } = get(page);
-		slug = params.slug;
+		const parts = params.parts?.split('/') ?? [];
 
-		console.log(params);
+		if (parts.length === 1) {
+			// One-shot: /comic/Nausea
+			title = parts[0];
+			imagePathPrefix = `/images/comics/${parts[0]}`;
+		} else if (parts.length === 2) {
+			// Could be either: /comic/Nausea/viewer → one-shot
+			if (parts[1] === 'viewer') {
+				// One-shot reader URL
+				title = parts[0];
+				imagePathPrefix = `/images/comics/${parts[0]}`;
+			} else {
+				// Series short form: /comic/series/chapter1
+				title = `${parts[0]} - ${parts[1]}`;
+				imagePathPrefix = `/images/comics/${parts[0]}/${parts[1]}`;
+			}
+		} else if (parts.length === 3 && parts[1] === 'viewer') {
+			// Series full viewer URL: /comic/series/viewer/chapter1
+			title = `${parts[0]} - ${parts[2]}`;
+			imagePathPrefix = `/images/comics/${parts[0]}/${parts[2]}`;
+		} else {
+			title = 'Comic Not Found';
+			console.error('Invalid comic path:', parts);
+			return;
+		}
 
-		await preloadImages(slug);
+		await preloadImages(imagePathPrefix);
 	});
 </script>
 
 <svelte:head>
-	<title>{slug} - Comic Viewer</title>
+	<title>{title} - Comic Viewer</title>
 </svelte:head>
 
 <div class="comic-reader">
 	{#if images.length > 0}
-		<img
-			src={images[currentIndex]}
-			alt={`Comic Page ${currentIndex + 1}`}
-			class="comic-page"
-		/>
+		<img src={images[currentIndex]} alt={`Comic Page ${currentIndex + 1}`} class="comic-page" />
 		<div class="controls">
 			<button on:click={prevPage} disabled={currentIndex === 0}>⬅ Prev</button>
 			<span>Page {currentIndex + 1} of {images.length}</span>

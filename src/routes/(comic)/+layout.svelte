@@ -8,13 +8,14 @@
 
 	import { onMount } from 'svelte';
 
-	export let data: { post: BlogPost };
-	$: ({ post } = data);
-
+	export let data: { post?: BlogPost } = {}; // safer fallback
+	let post: BlogPost | undefined;
 	let chapters: string[] = [];
 
+	$: post = data?.post;
+
 	onMount(async () => {
-		if (post.series) {
+		if (post?.series) {
 			const res = await fetch(`/api/chapters/${post.slug}`);
 			if (res.ok) {
 				const data = await res.json();
@@ -23,6 +24,7 @@
 		}
 	});
 </script>
+
 
 <div class="article-layout">
 	<Header showBackground />
@@ -126,13 +128,6 @@
 		border-radius: 6px;
 		overflow: hidden;
 		position: relative;
-	}
-
-	.chapter-links .cover-image img {
-		width: 100%;
-		height: 260px;
-		object-fit: cover;
-		display: block;
 	}
 
 	.article-layout {

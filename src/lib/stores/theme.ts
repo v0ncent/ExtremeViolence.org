@@ -1,22 +1,13 @@
 import { writable } from 'svelte/store';
-import { browser } from '$app/environment';
 
 function createTheme() {
-  let currentTheme;
-  if (browser) {
-    currentTheme = localStorage.getItem('theme-preference') || 'auto';
-  }
-
-  const { subscribe, set } = writable<string>(currentTheme);
+  // Always return dark theme, no localStorage needed
+  const { subscribe, set } = writable<string>('dark');
 
   return {
     subscribe,
-    set: (value: string) => {
-      if (browser) {
-        localStorage.setItem('theme-preference', value);
-        document.firstElementChild?.setAttribute('data-theme', value);
-      }
-      set(value);
+    set: () => {
+      // Do nothing - theme is locked to dark
     }
   };
 }

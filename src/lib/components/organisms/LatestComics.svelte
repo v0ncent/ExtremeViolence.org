@@ -8,13 +8,13 @@
 	export let sectiontitle: string;
 </script>
 
-<ContentSection id="latest-comics" title={sectiontitle} align="left">
+<ContentSection id="latest-comics" title={sectiontitle}>
 	<div class="grid {layout}">
 		{#each posts as post}
 			<BlogPostCard
 				slug={post.slug}
 				title={post.title}
-				excerpt={""}
+				excerpt={''}
 				coverImage={post.coverImage}
 				showImage={true}
 				small={true}

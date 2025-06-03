@@ -25,7 +25,6 @@
 	});
 </script>
 
-
 <div class="article-layout">
 	<Header showBackground />
 
@@ -48,12 +47,7 @@
 						<ul>
 							{#each chapters as chapter}
 								<li>
-									<a
-										href={`/${post.slug}/viewer/${chapter}`}
-										class="cover-image hover-container"
-										target="_blank"
-										rel="noopener noreferrer"
-									>
+									<a href={`/${post.slug}/viewer/${chapter}`} class="cover-image hover-container">
 										<Image
 											src={`/images/comics/${post.slug}/${chapter}/1.jpg`}
 											alt={`Cover of ${post.title} - Chapter ${chapter}`}
@@ -70,12 +64,7 @@
 				{/if}
 			{:else if post && post.coverImage}
 				<!-- Non-Series: Render Single Cover Image -->
-				<a
-					href={`/${post.slug}/viewer`}
-					class="cover-image hover-container"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
+				<a href={`/${post.slug}/viewer`} class="cover-image hover-container">
 					<Image src={post.coverImage} alt={post.title} />
 					<div class="hover-text">Click to read!</div>
 				</a>
@@ -94,12 +83,13 @@
 	@import '$lib/scss/_mixins.scss';
 
 	.series-coverimage {
-		max-width: 800px;
-		margin: 0 auto 2rem auto; // added bottom space
+		max-width: 500px;
+		margin: 0 auto 2rem auto;
 		width: 100%;
 		box-shadow: var(--image-shadow);
 		border-radius: 6px;
 		overflow: hidden;
+		text-align: center;
 	}
 
 	.chapter-links h2 {
@@ -128,6 +118,7 @@
 		border-radius: 6px;
 		overflow: hidden;
 		position: relative;
+		text-align: center;
 	}
 
 	.article-layout {
@@ -164,12 +155,13 @@
 
 		.cover-image {
 			margin: 0 auto;
-			max-width: 800px;
+			max-width: 500px;
 			width: 100%;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;
 			overflow: hidden;
 			position: relative;
+			text-align: center;
 		}
 
 		:global(.cover-image img) {

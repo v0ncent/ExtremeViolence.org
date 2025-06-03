@@ -35,7 +35,7 @@
 	<div class="layout-container">
 		<div class="left-column">
 			{#if newsposts && newsposts.length > 0}
-				<NewsSection {newsposts} sectiontitle="Recent News" sectionid="recent-news"/>
+				<NewsSection {newsposts} sectiontitle="Recent News" sectionid="recent-news" />
 				<br />
 			{/if}
 
@@ -46,7 +46,7 @@
 
 		<div class="right-column">
 			{#if comicposts && comicposts.length > 0}
-				<LatestComics posts={comicposts} sectiontitle="Latest Comics"/>
+				<LatestComics posts={comicposts} sectiontitle="Latest Comics" />
 			{/if}
 		</div>
 	</div>
@@ -62,6 +62,7 @@
 		padding: 32px;
 		max-width: 1200px;
 		margin: 0 auto;
+		opacity: 0.9;
 
 		@include for-phone-only {
 			grid-template-columns: 1fr;
@@ -72,5 +73,10 @@
 	.right-column {
 		padding: 16px;
 		border-radius: 8px;
+		opacity: 0.9;
+	}
+
+	:global(.content-warning) {
+		opacity: 0.9;
 	}
 </style>

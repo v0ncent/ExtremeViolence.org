@@ -12,7 +12,7 @@
 <div class="layout-container">
 	{#if newsposts && newsposts.length > 0}
 		<div class="scroll-vertical">
-			<NewsSection {newsposts} sectiontitle="All News" sectionid="all-news"/>
+			<NewsSection {newsposts} sectiontitle="All News" sectionid="all-news" />
 		</div>
 	{/if}
 </div>

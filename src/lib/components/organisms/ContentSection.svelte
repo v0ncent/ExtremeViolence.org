@@ -4,7 +4,7 @@
 	export let align: 'left' | 'center' | 'right' | 'top' = 'center';
 </script>
 
-<section id={id} class={`content-section align-${align}`}>
+<section {id} class={`content-section align-${align}`}>
 	<h2>{title}</h2>
 	<slot />
 </section>

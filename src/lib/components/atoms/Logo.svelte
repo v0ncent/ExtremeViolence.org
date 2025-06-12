@@ -4,7 +4,7 @@
 </script>
 
 <div class="logo">
-	<img src={src} alt={alt} class="logo-image" />
+	<img {src} {alt} class="logo-image" />
 </div>
 
 <style lang="scss">

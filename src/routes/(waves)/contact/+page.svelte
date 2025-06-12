@@ -38,8 +38,8 @@
 			I will draw <strong>nothing involving minors or children being hurt or abused</strong> unless there
 			is an artistic / narrative reasoning.
 		</li>
-			I will draw<strong>nothing involving animals being hurt or abused</strong> unless there is an
-			artistic / narrative reasoning. (beastiality is a hard no!)
+		I will draw<strong>nothing involving animals being hurt or abused</strong> unless there is an
+		artistic / narrative reasoning. (beastiality is a hard no!)
 		<li>
 			I will <strong>not draw anything involving scat or feces</strong>.
 		</li>

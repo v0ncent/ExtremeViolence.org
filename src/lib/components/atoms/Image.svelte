@@ -42,10 +42,24 @@
 
 {#if link}
 	<a href={link}>
-		<img srcset={buildSrcset()} {src} {alt} loading="lazy" decoding="async" class:full-bleed={fullBleed} />
+		<img
+			srcset={buildSrcset()}
+			{src}
+			{alt}
+			loading="lazy"
+			decoding="async"
+			class:full-bleed={fullBleed}
+		/>
 	</a>
 {:else}
-	<img srcset={buildSrcset()} {src} {alt} loading="lazy" decoding="async" class:full-bleed={fullBleed} />
+	<img
+		srcset={buildSrcset()}
+		{src}
+		{alt}
+		loading="lazy"
+		decoding="async"
+		class:full-bleed={fullBleed}
+	/>
 {/if}
 
 <style lang="scss">
@@ -61,4 +75,3 @@
 		text-decoration: none;
 	}
 </style>
-

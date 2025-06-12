@@ -32,7 +32,6 @@
 						<p>by Vincent Banks</p>
 					{/if}
 				</div>
-
 			{/if}
 			<div class="content">
 				<slot />

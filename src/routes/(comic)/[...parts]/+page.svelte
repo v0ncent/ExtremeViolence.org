@@ -13,7 +13,7 @@
 	async function imageExists(url: string) {
 		try {
 			const res = await fetch(url);
-			return res.ok && res.headers.get('Content-Type')?.startsWith('image/');;
+			return res.ok && res.headers.get('Content-Type')?.startsWith('image/');
 		} catch {
 			return false;
 		}
@@ -26,7 +26,7 @@
 			const imagePath = `${base}/${i}.jpg`;
 
 			const exists = await imageExists(imagePath);
- 
+
 			if (exists) {
 				tempImages.push(imagePath);
 			} else {

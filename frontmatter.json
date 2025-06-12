@@ -5,7 +5,7 @@
 			"name": "default",
 			"previewPath": null,
 			"defaultFileName": "+page",
-      "pageBundle": true,
+			"pageBundle": true,
 			"fields": [
 				{
 					"title": "Title",
@@ -16,7 +16,7 @@
 					"title": "Slug",
 					"name": "slug",
 					"type": "string",
-          "default": "{{slug}}"
+					"default": "{{slug}}"
 				},
 				{
 					"title": "Cover Image",
@@ -46,7 +46,7 @@
 					"title": "Is hidden",
 					"name": "hidden",
 					"type": "draft",
-          "default": false
+					"default": false
 				},
 				{
 					"title": "Tags",
@@ -67,7 +67,7 @@
 		{
 			"title": "posts",
 			"path": "[[workspace]]/src/routes/(blog-article)",
-      "filePrefix": null
+			"filePrefix": null
 		}
 	]
 }

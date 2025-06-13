@@ -21,16 +21,16 @@
 
 	<main>
 		<article id="article-content">
-			{#if post && post.coverImage}
-				<div class="cover-image">
-					<Image src={post.coverImage} alt={post.title} />
-				</div>
+			{#if post}
+				{#if post.coverImage}
+					<div class="cover-image">
+						<Image src={post.coverImage} alt={post.title} />
+					</div>
+				{/if}
 
 				<div class="header">
-					{#if post}
-						<h1>{post.title}</h1>
-						<p>by Vincent Banks</p>
-					{/if}
+					<h1>{post.title}</h1>
+					<p>by Vincent Banks</p>
 				</div>
 			{/if}
 			<div class="content">

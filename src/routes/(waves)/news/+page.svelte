@@ -10,6 +10,10 @@
 </script>
 
 <div class="layout-container">
+	<div class="header">
+		<h1>News</h1>
+		<a href="/create-post" class="create-post-button">Create Post</a>
+	</div>
 	{#if newsposts && newsposts.length > 0}
 		<div class="scroll-vertical">
 			<NewsSection {newsposts} sectiontitle="All News" sectionid="all-news" />
@@ -22,10 +26,37 @@
 
 	.layout-container {
 		display: flex;
+		flex-direction: column;
 		justify-content: center;
 		padding: 32px;
 		max-width: 1200px;
 		margin: 0 auto;
+	}
+
+	.header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 2rem;
+
+		h1 {
+			margin: 0;
+		}
+	}
+
+	.create-post-button {
+		padding: 0.5rem 1rem;
+		background-color: var(--color--primary);
+		color: white;
+		border-radius: 8px;
+		font-weight: bold;
+		text-decoration: none;
+		transition: 0.3s;
+
+		&:hover {
+			background-color: var(--color--primary-dark);
+			filter: drop-shadow(0px 0px 5px var(--color--primary));
+		}
 	}
 
 	.scroll-vertical {

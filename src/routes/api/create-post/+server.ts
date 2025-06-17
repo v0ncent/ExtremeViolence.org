@@ -5,7 +5,7 @@ import path from 'path';
 export async function POST({ request }) {
 	const formData = await request.formData();
 	const title = formData.get('title');
-	const slug = formData.get('title')?.toString().replace(/ /g, '-');
+	let slug = formData.get('title')?.toString().replace(/ /g, '-');
 	const excerpt = formData.get('excerpt');
 	const content = formData.get('content');
 	const coverImage = formData.get('coverImage');
@@ -16,8 +16,20 @@ export async function POST({ request }) {
 	}
 
 	try {
+		// Check for existing slugs and generate a unique one if needed
+		const blogDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)');
+		const existingDirs = await fs.readdir(blogDir);
+		let uniqueSlug = slug;
+		let counter = 1;
+
+		while (existingDirs.includes(uniqueSlug)) {
+			uniqueSlug = `${slug}-${counter}`;
+			counter++;
+		}
+		slug = uniqueSlug;
+
 		// Create the post directory
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)', slug.toString());
+		const postDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)', slug);
 		await fs.mkdir(postDir, { recursive: true });
 
 		// Format the cover image path if provided
@@ -50,7 +62,12 @@ ${content}`;
 
 		await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
 
-		return json({ success: true, slug });
+		// Return success with the slug and a flag to trigger refresh
+		return json({
+			success: true,
+			slug,
+			shouldRefresh: true
+		});
 	} catch (error) {
 		console.error('Error creating post:', error);
 		return json({ error: 'Failed to create post' }, { status: 500 });

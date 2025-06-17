@@ -3,6 +3,8 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
+	import Image from '$lib/components/atoms/Image.svelte';
+	import dateformat from 'dateformat';
 
 	let title = '';
 	let slug = '';
@@ -13,6 +15,7 @@
 	let currentTag = '';
 	let error = '';
 	let loading = false;
+	let showPreview = false;
 
 	function addTag() {
 		if (currentTag && !tags.includes(currentTag)) {
@@ -70,70 +73,108 @@
 				<h1>Create New Blog Post</h1>
 			</div>
 			<div class="content">
-				<form on:submit={handleSubmit}>
-					{#if error}
-						<div class="error">{error}</div>
-					{/if}
+				<div class="editor-container">
+					<form on:submit={handleSubmit}>
+						{#if error}
+							<div class="error">{error}</div>
+						{/if}
 
-					<div class="form-group">
-						<label for="title">Title</label>
-						<input type="text" id="title" bind:value={title} required />
-					</div>
+						<div class="form-group">
+							<label for="title">Title</label>
+							<input type="text" id="title" bind:value={title} required />
+						</div>
 
-					<div class="form-group">
-						<label for="excerpt">Excerpt</label>
-						<textarea id="excerpt" bind:value={excerpt} required />
-					</div>
+						<div class="form-group">
+							<label for="excerpt">Excerpt</label>
+							<textarea id="excerpt" bind:value={excerpt} required />
+						</div>
 
-					<div class="form-group">
-						<label for="content">Content</label>
-						<textarea id="content" bind:value={content} required />
-					</div>
+						<div class="form-group">
+							<label for="content">Content</label>
+							<textarea id="content" bind:value={content} required />
+						</div>
 
-					<div class="form-group">
-						<label for="coverImage">Cover Image</label>
-						<div class="image-input">
-							<input
-								type="text"
-								id="coverImage"
-								bind:value={coverImage}
-								placeholder="e.g., image-name.png"
-							/>
-							<div class="image-help">
-								<p>Image should be placed in the <code>/static/images/posts/</code> directory.</p>
-								<p>
-									Just enter the filename (e.g., "image-name.png") or the full path (e.g.,
-									"/images/posts/image-name.png")
-								</p>
+						<div class="form-group">
+							<label for="coverImage">Cover Image</label>
+							<div class="image-input">
+								<input
+									type="text"
+									id="coverImage"
+									bind:value={coverImage}
+									placeholder="e.g., image-name.png"
+								/>
+								<div class="image-help">
+									<p>Image should be placed in the <code>/static/images/posts/</code> directory.</p>
+									<p>
+										Just enter the filename (e.g., "image-name.png") or the full path (e.g.,
+										"/images/posts/image-name.png")
+									</p>
+								</div>
 							</div>
 						</div>
-					</div>
 
-					<div class="form-group">
-						<label for="tags">Tags</label>
-						<div class="tags-input">
-							<input
-								type="text"
-								id="tags"
-								bind:value={currentTag}
-								on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-							/>
-							<button type="button" on:click={addTag}>Add Tag</button>
+						<div class="form-group">
+							<label for="tags">Tags</label>
+							<div class="tags-input">
+								<input
+									type="text"
+									id="tags"
+									bind:value={currentTag}
+									on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+								/>
+								<button type="button" on:click={addTag}>Add Tag</button>
+							</div>
+							<div class="tags-list">
+								{#each tags as tag}
+									<span class="tag">
+										{tag}
+										<button type="button" on:click={() => removeTag(tag)}>×</button>
+									</span>
+								{/each}
+							</div>
 						</div>
-						<div class="tags-list">
-							{#each tags as tag}
-								<span class="tag">
-									{tag}
-									<button type="button" on:click={() => removeTag(tag)}>×</button>
-								</span>
-							{/each}
-						</div>
-					</div>
 
-					<button type="submit" disabled={loading}>
-						{loading ? 'Creating...' : 'Create Post'}
-					</button>
-				</form>
+						<div class="form-actions">
+							<button
+								type="button"
+								class="preview-toggle"
+								on:click={() => (showPreview = !showPreview)}
+							>
+								{showPreview ? 'Hide Preview' : 'Show Preview'}
+							</button>
+							<button type="submit" disabled={loading}>
+								{loading ? 'Creating...' : 'Create Post'}
+							</button>
+						</div>
+					</form>
+
+					{#if showPreview}
+						<div class="preview-section">
+							<h2>Preview</h2>
+							<article class="preview-content">
+								<div class="header">
+									<h1>{title || 'Untitled Post'}</h1>
+									<div class="note">{dateformat(new Date(), 'UTC:dd mmmm yyyy')}</div>
+								</div>
+								{#if coverImage}
+									<div class="cover-image">
+										<Image src={coverImage} alt={title || 'Post cover image'} />
+									</div>
+								{/if}
+								<div class="content">
+									{@html content}
+								</div>
+								{#if tags.length > 0}
+									<div class="tags">
+										{#each tags as tag}
+											<span class="tag">{tag}</span>
+										{/each}
+									</div>
+								{/if}
+							</article>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</article>
 	</main>
@@ -177,6 +218,16 @@
 		.content {
 			max-width: var(--main-column-width);
 			margin: 0 auto;
+		}
+
+		.editor-container {
+			display: grid;
+			gap: 2rem;
+			grid-template-columns: 1fr;
+
+			@include for-desktop-up {
+				grid-template-columns: 1fr 1fr;
+			}
 		}
 
 		form {
@@ -274,9 +325,70 @@
 			margin-bottom: 1rem;
 		}
 
+		.form-actions {
+			display: flex;
+			gap: 1rem;
+			justify-content: flex-end;
+		}
+
+		.preview-toggle {
+			background: var(--color--background-alt);
+			color: var(--color--text);
+			border: 1px solid var(--color--border);
+			padding: 0.5rem 1rem;
+			border-radius: 4px;
+			cursor: pointer;
+
+			&:hover {
+				background: var(--color--background);
+			}
+		}
+
 		button:disabled {
 			opacity: 0.7;
 			cursor: not-allowed;
+		}
+
+		.preview-section {
+			background: var(--color--background);
+			border: 1px solid var(--color--border);
+			border-radius: 4px;
+			padding: 1rem;
+
+			h2 {
+				margin-bottom: 1rem;
+				font-size: 1.25rem;
+			}
+		}
+
+		.preview-content {
+			.header {
+				text-align: left;
+				margin-bottom: 1rem;
+
+				h1 {
+					font-size: 1.5rem;
+					margin-bottom: 0.5rem;
+				}
+			}
+
+			.cover-image {
+				margin: 1rem 0;
+				border-radius: 4px;
+				overflow: hidden;
+			}
+
+			.content {
+				font-size: 0.875rem;
+				line-height: 1.6;
+			}
+
+			.tags {
+				margin-top: 1rem;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+			}
 		}
 	}
 </style>

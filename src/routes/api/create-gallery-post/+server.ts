@@ -6,7 +6,7 @@ import sharp from 'sharp';
 export async function POST({ request }) {
     const formData = await request.formData();
     const title = formData.get('title');
-    const slug = formData.get('title')?.toString().replace(/ /g, '-');
+    let slug = formData.get('title')?.toString().replace(/ /g, '-');
     const excerpt = 'Gallery Post';
     const coverImage = formData.get('coverImage');
     const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
@@ -16,6 +16,18 @@ export async function POST({ request }) {
     }
 
     try {
+        // Check for existing slugs and generate a unique one if needed
+        const galleryDir = path.join(process.cwd(), 'src', 'routes', '(gallery)');
+        const existingDirs = await fs.readdir(galleryDir);
+        let uniqueSlug = slug;
+        let counter = 1;
+
+        while (existingDirs.includes(uniqueSlug)) {
+            uniqueSlug = `${slug}-${counter}`;
+            counter++;
+        }
+        slug = uniqueSlug;
+
         // Format the cover image path
         let formattedCoverImage = coverImage.toString().startsWith('/images/gallery/')
             ? coverImage.toString()
@@ -30,7 +42,7 @@ export async function POST({ request }) {
         }
 
         // Create the post directory
-        const postDir = path.join(process.cwd(), 'src', 'routes', '(gallery)', slug.toString());
+        const postDir = path.join(process.cwd(), 'src', 'routes', '(gallery)', slug);
         await fs.mkdir(postDir, { recursive: true });
 
         // Create the markdown file with frontmatter and required script section
@@ -55,7 +67,12 @@ ${tags.map((tag) => `  - ${tag}`).join('\n')}
 
         await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
 
-        return json({ success: true, slug });
+        // Return success with the slug and a flag to trigger refresh
+        return json({
+            success: true,
+            slug,
+            shouldRefresh: true
+        });
     } catch (error) {
         console.error('Error creating gallery post:', error);
         return json({ error: 'Failed to create gallery post' }, { status: 500 });

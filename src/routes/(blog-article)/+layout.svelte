@@ -118,21 +118,19 @@
 		.cover-image {
 			width: min(var(--main-column-width), 100%);
 			margin: 0 auto;
-			max-height: 400px;
 			box-shadow: var(--image-shadow);
 			border-radius: 6px;
 
 			img {
 				width: 100%;
-				height: 100%;
-				max-height: 400px;
-				object-fit: cover;
+				height: auto;
+				object-fit: contain;
 			}
 		}
 
 		:global(.cover-image img) {
-			max-height: 400px;
-			object-fit: cover;
+			height: auto;
+			object-fit: contain;
 		}
 
 		.content {

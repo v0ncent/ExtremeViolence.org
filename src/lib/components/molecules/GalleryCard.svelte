@@ -4,6 +4,7 @@
 
 	export let post: BlogPost;
 	export let size: 'small' | 'medium' | 'large' = 'small';
+
 </script>
 
 <article class="gallery-card {size}">

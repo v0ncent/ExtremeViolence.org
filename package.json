@@ -51,6 +51,7 @@
 		"@fontsource/ubuntu-mono": "^4.5.11",
 		"gray-matter": "^4.0.3",
 		"html-truncate": "^1.2.2",
+		"marked": "^15.0.12",
 		"nodemailer": "^6.10.1"
 	}
 }

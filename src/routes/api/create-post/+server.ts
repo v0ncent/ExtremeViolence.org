@@ -5,7 +5,7 @@ import path from 'path';
 export async function POST({ request }) {
 	const formData = await request.formData();
 	const title = formData.get('title');
-	const slug = formData.get('title');
+	const slug = formData.get('title')?.toString().replace(/ /g, '-');
 	const excerpt = formData.get('excerpt');
 	const content = formData.get('content');
 	const coverImage = formData.get('coverImage');

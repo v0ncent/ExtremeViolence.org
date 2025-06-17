@@ -6,7 +6,7 @@ import sharp from 'sharp';
 export async function POST({ request }) {
     const formData = await request.formData();
     const title = formData.get('title');
-    const slug = formData.get('title');
+    const slug = formData.get('title')?.toString().replace(/ /g, '-');
     const excerpt = 'Gallery Post';
     const coverImage = formData.get('coverImage');
     const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
@@ -44,7 +44,14 @@ width: ${metadata.width}
 height: ${metadata.height}
 tags:
 ${tags.map((tag) => `  - ${tag}`).join('\n')}
----`;
+---
+
+<script>
+  import Callout from "$lib/components/molecules/Callout.svelte";
+  import CodeBlock from "$lib/components/molecules/CodeBlock.svelte";
+  import Image from "$lib/components/atoms/Image.svelte";
+</script>
+`;
 
         await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
 

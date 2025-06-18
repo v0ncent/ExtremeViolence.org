@@ -1,13 +1,12 @@
 ---
-title: big pp
-slug: big-pp
-coverImage: /images/gallery/teto.jpg
-date: 2025-06-17T02:37:38.023Z
-excerpt: Gallery Post
-width: 736
-height: 1040
+title: Bruh News Posting
+slug: Bruh-News-Posting
+coverImage: /images/posts/teto.jpg
+date: 2025-06-18T04:09:56.630Z
+updated: 2025-06-18T04:09:56.630Z
+excerpt: News
 tags:
-  - gallery
+  - news
 ---
 
 <script>
@@ -15,3 +14,5 @@ tags:
   import CodeBlock from "$lib/components/molecules/CodeBlock.svelte";
   import Image from "$lib/components/atoms/Image.svelte";
 </script>
+
+THIS IS NOT THE FUCKING SAME

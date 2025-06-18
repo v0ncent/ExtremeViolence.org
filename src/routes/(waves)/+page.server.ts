@@ -5,7 +5,12 @@ import {
 	filteredComicPosts
 } from '$lib/data/blog-posts';
 
-export async function load() {
+export const prerender = false;
+
+export async function load({ url }) {
+	// Get the cache-busting parameter from the URL
+	const cacheBuster = url.searchParams.get('_t');
+
 	const newsposts = filteredNewsPosts.slice(0, 4);
 	const galleryandcomicposts = filteredComicGalleryPosts.slice(0, 4);
 	const comicposts = filteredComicPosts.slice(0, 6);
@@ -14,6 +19,7 @@ export async function load() {
 		features,
 		newsposts,
 		galleryandcomicposts,
-		comicposts
+		comicposts,
+		cacheBuster
 	};
 }

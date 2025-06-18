@@ -2,7 +2,8 @@
 title: bruh
 slug: bruh
 coverImage: /images/posts/teto.jpg
-date: 2025-06-12T23:59:37.238Z
+date: 2025-06-18T04:09:41.117Z
+updated: 2025-06-18T04:09:41.117Z
 excerpt: News
 tags:
   - news
@@ -14,4 +15,4 @@ tags:
   import Image from "$lib/components/atoms/Image.svelte";
 </script>
 
-BRUH BRUH BRUH
+FUCKING CHANGED

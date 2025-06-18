@@ -3,6 +3,7 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import dateformat from 'dateformat';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
+	import { goto } from '$app/navigation';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
@@ -12,6 +13,43 @@
 	$: ({ post } = data);
 
 	let metaKeywords = keywords;
+	let isDeleting = false;
+	let isEditing = false;
+
+	async function handleDelete() {
+		if (!post || !confirm('Are you sure you want to delete this post?')) {
+			return;
+		}
+
+		isDeleting = true;
+		try {
+			const response = await fetch('/api/delete-post', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ slug: post.slug })
+			});
+
+			const result = await response.json();
+
+			if (result.success) {
+				goto('/news'); // Redirect to news section instead of home page
+			} else {
+				alert('Failed to delete post: ' + result.error);
+			}
+		} catch (error) {
+			console.error('Error deleting post:', error);
+			alert('Failed to delete post');
+		} finally {
+			isDeleting = false;
+		}
+	}
+
+	async function handleEdit() {
+		if (!post) return;
+		goto(`/edit-post/${post.slug}`);
+	}
 </script>
 
 <svelte:head>
@@ -48,6 +86,14 @@
 					{#if post.updated}
 						<div class="note">Last updated: {dateformat(post.updated, 'UTC:dd mmmm yyyy')}</div>
 					{/if}
+					<div class="button-group">
+						<button class="edit-button" on:click={handleEdit} disabled={isEditing}>
+							{isEditing ? 'Editing...' : 'Edit Post'}
+						</button>
+						<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
+							{isDeleting ? 'Deleting...' : 'Delete Post'}
+						</button>
+					</div>
 				{/if}
 			</div>
 			{#if post && post.coverImage}
@@ -159,6 +205,53 @@
 			justify-content: center;
 			gap: 5px;
 			flex-wrap: wrap;
+		}
+	}
+
+	.button-group {
+		display: flex;
+		gap: 10px;
+		margin-top: 20px;
+	}
+
+	.edit-button {
+		padding: 8px 16px;
+		background-color: #28a745;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 14px;
+		transition: background-color 0.2s;
+
+		&:hover:not(:disabled) {
+			background-color: #218838;
+		}
+
+		&:disabled {
+			opacity: 0.7;
+			cursor: not-allowed;
+		}
+	}
+
+	.delete-button {
+		margin-top: 20px;
+		padding: 8px 16px;
+		background-color: #dc3545;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 14px;
+		transition: background-color 0.2s;
+
+		&:hover:not(:disabled) {
+			background-color: #c82333;
+		}
+
+		&:disabled {
+			opacity: 0.7;
+			cursor: not-allowed;
 		}
 	}
 </style>

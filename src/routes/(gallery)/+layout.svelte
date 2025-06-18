@@ -3,6 +3,7 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import dateformat from 'dateformat';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
+	import { goto } from '$app/navigation';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
@@ -12,6 +13,40 @@
 	$: ({ post } = data);
 
 	let metaKeywords = keywords;
+	let isDeleting = false;
+	let deleteError = '';
+
+	async function handleDelete() {
+		if (!confirm('Are you sure you want to delete this gallery post?')) {
+			return;
+		}
+
+		isDeleting = true;
+		deleteError = '';
+
+		try {
+			const response = await fetch('/api/delete-gallery-post', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ slug: post.slug })
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || 'Failed to delete post');
+			}
+
+			// Redirect to gallery section after successful deletion
+			goto('/gallery');
+		} catch (error: any) {
+			deleteError = error.message;
+		} finally {
+			isDeleting = false;
+		}
+	}
 </script>
 
 <div class="article-layout">
@@ -31,6 +66,15 @@
 				<div class="header">
 					<h1>{post.title}</h1>
 					<p>by Vincent Banks</p>
+					<div class="action-buttons">
+						<a href="/edit-gallery-post/{post.slug}" class="edit-button">Edit Post</a>
+						<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
+							{isDeleting ? 'Deleting...' : 'Delete Post'}
+						</button>
+					</div>
+					{#if deleteError}
+						<p class="error">{deleteError}</p>
+					{/if}
 				</div>
 			{/if}
 			<div class="content">
@@ -90,6 +134,75 @@
 			.note {
 				font-size: 90%;
 				color: rgba(var(--color--text-rgb), 0.8);
+			}
+
+			.delete-button {
+				margin-top: 10px;
+				padding: 8px 16px;
+				background-color: #dc3545;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				font-weight: bold;
+				transition: background-color 0.2s;
+
+				&:hover:not(:disabled) {
+					background-color: #c82333;
+				}
+
+				&:disabled {
+					opacity: 0.7;
+					cursor: not-allowed;
+				}
+			}
+
+			.error {
+				color: #dc3545;
+				margin-top: 8px;
+				font-size: 0.9em;
+			}
+
+			.action-buttons {
+				display: flex;
+				gap: 10px;
+				margin-top: 10px;
+
+				.edit-button {
+					padding: 8px 16px;
+					background-color: #007bff;
+					color: white;
+					border: none;
+					border-radius: 4px;
+					cursor: pointer;
+					font-weight: bold;
+					text-decoration: none;
+					transition: background-color 0.2s;
+
+					&:hover {
+						background-color: #0056b3;
+					}
+				}
+
+				.delete-button {
+					padding: 8px 16px;
+					background-color: #dc3545;
+					color: white;
+					border: none;
+					border-radius: 4px;
+					cursor: pointer;
+					font-weight: bold;
+					transition: background-color 0.2s;
+
+					&:hover:not(:disabled) {
+						background-color: #c82333;
+					}
+
+					&:disabled {
+						opacity: 0.7;
+						cursor: not-allowed;
+					}
+				}
 			}
 		}
 

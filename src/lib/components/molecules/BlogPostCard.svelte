@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Card from '$lib/components/atoms/Card.svelte';
 	import Image from '../atoms/Image.svelte';
+	import { onMount } from 'svelte';
 
 	export let title: string;
 	export let coverImage: string | undefined = undefined;
@@ -11,6 +12,14 @@
 	export let showImage = true;
 	export let small: boolean = false;
 	export let previewHtml: string | undefined = undefined;
+
+	// Add a key to force re-render when the preview HTML changes
+	let key = 0;
+
+	onMount(() => {
+		// Increment the key when the component mounts to ensure fresh content
+		key = Date.now();
+	});
 </script>
 
 <Card

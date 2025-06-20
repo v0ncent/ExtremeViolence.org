@@ -4,49 +4,49 @@ import path from 'path';
 import sharp from 'sharp';
 
 export async function POST({ request }) {
-    const formData = await request.formData();
-    const title = formData.get('title');
-    let slug = formData.get('title')?.toString().replace(/ /g, '-');
-    const excerpt = 'Gallery Post';
-    const coverImage = formData.get('coverImage');
-    const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
+	const formData = await request.formData();
+	const title = formData.get('title');
+	let slug = formData.get('title')?.toString().replace(/ /g, '-');
+	const excerpt = 'Gallery Post';
+	const coverImage = formData.get('coverImage');
+	const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
 
-    if (!title || !slug || !excerpt || !coverImage) {
-        return json({ error: 'Missing required fields' }, { status: 400 });
-    }
+	if (!title || !slug || !excerpt || !coverImage) {
+		return json({ error: 'Missing required fields' }, { status: 400 });
+	}
 
-    try {
-        // Check for existing slugs and generate a unique one if needed
-        const galleryDir = path.join(process.cwd(), 'src', 'routes', '(gallery)');
-        const existingDirs = await fs.readdir(galleryDir);
-        let uniqueSlug = slug;
-        let counter = 1;
+	try {
+		// Check for existing slugs and generate a unique one if needed
+		const galleryDir = path.join(process.cwd(), 'src', 'routes', '(gallery)');
+		const existingDirs = await fs.readdir(galleryDir);
+		let uniqueSlug = slug;
+		let counter = 1;
 
-        while (existingDirs.includes(uniqueSlug)) {
-            uniqueSlug = `${slug}-${counter}`;
-            counter++;
-        }
-        slug = uniqueSlug;
+		while (existingDirs.includes(uniqueSlug)) {
+			uniqueSlug = `${slug}-${counter}`;
+			counter++;
+		}
+		slug = uniqueSlug;
 
-        // Format the cover image path
-        let formattedCoverImage = coverImage.toString().startsWith('/images/gallery/')
-            ? coverImage.toString()
-            : `/images/gallery/${coverImage.toString()}`;
+		// Format the cover image path
+		let formattedCoverImage = coverImage.toString().startsWith('/images/gallery/')
+			? coverImage.toString()
+			: `/images/gallery/${coverImage.toString()}`;
 
-        // Get image dimensions
-        const imagePath = path.join(process.cwd(), 'static', formattedCoverImage.slice(1));
-        const metadata = await sharp(imagePath).metadata();
+		// Get image dimensions
+		const imagePath = path.join(process.cwd(), 'static', formattedCoverImage.slice(1));
+		const metadata = await sharp(imagePath).metadata();
 
-        if (!metadata.width || !metadata.height) {
-            return json({ error: 'Could not get image dimensions' }, { status: 400 });
-        }
+		if (!metadata.width || !metadata.height) {
+			return json({ error: 'Could not get image dimensions' }, { status: 400 });
+		}
 
-        // Create the post directory
-        const postDir = path.join(process.cwd(), 'src', 'routes', '(gallery)', slug);
-        await fs.mkdir(postDir, { recursive: true });
+		// Create the post directory
+		const postDir = path.join(process.cwd(), 'src', 'routes', '(gallery)', slug);
+		await fs.mkdir(postDir, { recursive: true });
 
-        // Create the markdown file with frontmatter and required script section
-        const markdownContent = `---
+		// Create the markdown file with frontmatter and required script section
+		const markdownContent = `---
 title: ${title}
 slug: ${slug}
 coverImage: ${formattedCoverImage}
@@ -65,16 +65,16 @@ ${tags.map((tag) => `  - ${tag}`).join('\n')}
 </script>
 `;
 
-        await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
+		await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
 
-        // Return success with the slug and a flag to trigger refresh
-        return json({
-            success: true,
-            slug,
-            shouldRefresh: true
-        });
-    } catch (error) {
-        console.error('Error creating gallery post:', error);
-        return json({ error: 'Failed to create gallery post' }, { status: 500 });
-    }
+		// Return success with the slug and a flag to trigger refresh
+		return json({
+			success: true,
+			slug,
+			shouldRefresh: true
+		});
+	} catch (error) {
+		console.error('Error creating gallery post:', error);
+		return json({ error: 'Failed to create gallery post' }, { status: 500 });
+	}
 }

@@ -3,31 +3,31 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export async function DELETE({ request }) {
-    const { slug } = await request.json();
+	const { slug } = await request.json();
 
-    if (!slug) {
-        return json({ error: 'Missing slug parameter' }, { status: 400 });
-    }
+	if (!slug) {
+		return json({ error: 'Missing slug parameter' }, { status: 400 });
+	}
 
-    try {
-        const postDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)', slug);
-        
-        // Check if directory exists
-        try {
-            await fs.access(postDir);
-        } catch {
-            return json({ error: 'Post not found' }, { status: 404 });
-        }
+	try {
+		const postDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)', slug);
 
-        // Delete the post directory and its contents
-        await fs.rm(postDir, { recursive: true, force: true });
+		// Check if directory exists
+		try {
+			await fs.access(postDir);
+		} catch {
+			return json({ error: 'Post not found' }, { status: 404 });
+		}
 
-        return json({
-            success: true,
-            shouldRefresh: true
-        });
-    } catch (error) {
-        console.error('Error deleting post:', error);
-        return json({ error: 'Failed to delete post' }, { status: 500 });
-    }
+		// Delete the post directory and its contents
+		await fs.rm(postDir, { recursive: true, force: true });
+
+		return json({
+			success: true,
+			shouldRefresh: true
+		});
+	} catch (error) {
+		console.error('Error deleting post:', error);
+		return json({ error: 'Failed to delete post' }, { status: 500 });
+	}
 }

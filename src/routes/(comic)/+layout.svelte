@@ -34,15 +34,21 @@
 		<article id="article-content">
 			{#if post && post.series}
 				<!-- Series: Render Chapter List -->
+				<section class="series-coverimage hover-container">
+					<Image
+						src={`/images/comics/${post.slug}/SeriesCover.jpg`}
+						alt={`Cover of ${post.title}`}
+					/>
+				</section>
+
+				{#if post.description}
+					<div class="comic-description">
+						<p>{post.description}</p>
+					</div>
+				{/if}
+
 				{#if chapters.length > 0}
 					<section class="chapter-links">
-						<section class="series-coverimage hover-container">
-							<Image
-								src={`/images/comics/${post.slug}/SeriesCover.jpg`}
-								alt={`Cover of ${post.title}`}
-							/>
-						</section>
-
 						<h2>Chapters</h2>
 						<ul>
 							{#each chapters as chapter}
@@ -68,6 +74,12 @@
 					<Image src={post.coverImage} alt={post.title} />
 					<div class="hover-text">Click to read!</div>
 				</a>
+
+				{#if post.description}
+					<div class="comic-description">
+						<p>{post.description}</p>
+					</div>
+				{/if}
 			{/if}
 
 			<div class="content">
@@ -90,6 +102,23 @@
 		border-radius: 6px;
 		overflow: hidden;
 		text-align: center;
+	}
+
+	.comic-description {
+		max-width: 65ch;
+		margin: 2rem auto;
+		padding: 1.5rem;
+		background: var(--color--callout-background);
+		border-radius: 8px;
+		border-left: 4px solid var(--color--accent);
+		box-shadow: var(--shadow--small);
+	}
+
+	.comic-description p {
+		margin: 0;
+		line-height: 1.6;
+		color: var(--color--text);
+		font-size: 1.1rem;
 	}
 
 	.chapter-links h2 {

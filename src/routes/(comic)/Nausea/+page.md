@@ -1,11 +1,11 @@
 ---
 title: Nausea
-slug: Nausea
-coverImage: /images/comics/Nausea/1.jpg
-date: 2021-05-03T05:32:34Z
+slug: nausea
+coverImage: /images/comics/nausea/1.jpg
+date: 2025-06-20T05:14:55.830Z
 excerpt: Comics
 series: false
-description: A visceral exploration of existential dread and physical discomfort, this comic delves into the raw emotions of nausea both as a physical sensation and a metaphor for life's overwhelming moments.
+description: A man goes on a date with a cute girl. Can he control his nerves ? Better yet keep the contents of his stomach down? Come find out in this visceral exploration of existential dread and physical discomfort.
 tags:
   - comic
 ---

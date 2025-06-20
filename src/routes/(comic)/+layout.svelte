@@ -106,10 +106,10 @@
 										<a href={`/${post.slug}/viewer/${chapter}`} class="cover-image hover-container">
 											<Image
 												src={`/images/comics/${post.slug}/${chapter}/1.jpg`}
-												alt={`Cover of ${post.title} - Chapter ${chapter}`}
+												alt={`Cover of ${post.title} - Chapter ${chapter.replace('chapter', '')}`}
 											/>
 											<div class="hover-text">Click to read!</div>
-											<span>{chapter}</span>
+											<span>Chapter {chapter.replace('chapter', '')}</span>
 										</a>
 									</li>
 								{/each}

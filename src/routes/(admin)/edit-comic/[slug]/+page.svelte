@@ -26,6 +26,12 @@
 	let existingPages: string[] = [];
 	let pagesToDelete: string[] = [];
 
+	// Chapter management
+	let existingChapters: string[] = [];
+	let chaptersToDelete: string[] = [];
+	let newChapterPages: File[] = [];
+	let newChapterPagePreviews: string[] = [];
+
 	function handleCoverImageChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files[0]) {
@@ -68,24 +74,65 @@
 		}
 	}
 
-	// Load existing pages on mount
-	async function loadExistingPages() {
-		if (!isSeries && data?.post?.slug) {
+	function handleChapterPagesChange(event: Event) {
+		const input = event.target as HTMLInputElement;
+		if (input.files) {
+			newChapterPages = Array.from(input.files);
+			// Clear existing previews
+			newChapterPagePreviews = [];
+
+			// Create previews immediately
+			newChapterPages.forEach((file) => {
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					newChapterPagePreviews = [...newChapterPagePreviews, e.target?.result as string];
+				};
+				reader.readAsDataURL(file);
+			});
+		}
+	}
+
+	function removeNewChapterPage(index: number) {
+		newChapterPages = newChapterPages.filter((_, i) => i !== index);
+		newChapterPagePreviews = newChapterPagePreviews.filter((_, i) => i !== index);
+	}
+
+	function toggleChapterDelete(chapterName: string) {
+		if (chaptersToDelete.includes(chapterName)) {
+			chaptersToDelete = chaptersToDelete.filter((c) => c !== chapterName);
+		} else {
+			chaptersToDelete = [...chaptersToDelete, chapterName];
+		}
+	}
+
+	// Load existing pages and chapters on mount
+	async function loadExistingData() {
+		if (data?.post?.slug) {
 			try {
-				const response = await fetch(`/api/comic-pages/${data.post.slug}`);
-				if (response.ok) {
-					const data = await response.json();
-					existingPages = data.pages;
+				if (!isSeries) {
+					// Load pages for short stories
+					const response = await fetch(`/api/comic-pages/${data.post.slug}`);
+					if (response.ok) {
+						const data = await response.json();
+						existingPages = data.pages;
+					}
+				} else {
+					// Load chapters for series
+					const response = await fetch(`/api/chapters/${data.post.slug}`);
+					if (response.ok) {
+						const data = await response.json();
+						existingChapters = data.chapters;
+					}
 				}
 			} catch (error) {
-				console.error('Failed to load existing pages:', error);
+				console.error('Failed to load existing data:', error);
 			}
 		}
 	}
 
-	// Load pages when component mounts
+	// Load data when component mounts
 	onMount(() => {
-		loadExistingPages();
+		loadExistingData();
 	});
 
 	async function handleSubmit(event: Event) {
@@ -112,9 +159,23 @@
 				});
 			}
 
-			// Add pages to delete
+			// Add pages to delete for short stories
 			if (pagesToDelete.length > 0) {
 				formData.append('pagesToDelete', JSON.stringify(pagesToDelete));
+			}
+
+			// Add new chapter for series (auto-generate name)
+			if (isSeries && newChapterPages.length > 0) {
+				const nextChapterNumber = existingChapters.length + 1;
+				formData.append('newChapterName', `chapter${nextChapterNumber}`);
+				newChapterPages.forEach((page) => {
+					formData.append('newChapterPages', page);
+				});
+			}
+
+			// Add chapters to delete for series
+			if (chaptersToDelete.length > 0) {
+				formData.append('chaptersToDelete', JSON.stringify(chaptersToDelete));
 			}
 
 			const response = await fetch('/api/edit-comic', {
@@ -270,6 +331,91 @@
 											</div>
 										</div>
 									{/if}
+								</div>
+							</div>
+						{:else}
+							<div class="form-group">
+								<label>Chapter Management</label>
+
+								{#if existingChapters.length > 0}
+									<div class="existing-chapters">
+										<h4>Current Chapters ({existingChapters.length}):</h4>
+										<div class="chapters-grid">
+											{#each existingChapters as chapter}
+												<div class="chapter-item">
+													<img
+														src={`/images/comics/${data.post.slug}/${chapter}/1.jpg`}
+														alt="Chapter {chapter}"
+													/>
+													<span class="chapter-name">Chapter {chapter.replace('chapter', '')}</span>
+													<label class="delete-checkbox">
+														<input
+															type="checkbox"
+															checked={chaptersToDelete.includes(chapter)}
+															on:change={() => toggleChapterDelete(chapter)}
+														/>
+														Delete
+													</label>
+												</div>
+											{/each}
+										</div>
+									</div>
+								{:else}
+									<div class="no-chapters">
+										<p>No existing chapters found.</p>
+									</div>
+								{/if}
+
+								<div class="add-chapter">
+									<h4>Add New Chapter:</h4>
+									<div class="chapter-input">
+										<input
+											type="file"
+											id="chapterPages"
+											accept="image/*"
+											multiple
+											on:change={handleChapterPagesChange}
+											class="chapter-pages-input"
+										/>
+									</div>
+									<p class="help-text">
+										Select all pages for the new chapter. It will be automatically named "chapter{existingChapters.length +
+											1}" and pages will be numbered 1.jpg, 2.jpg, etc.
+									</p>
+
+									<div class="new-chapter-preview">
+										<h5>
+											New Chapter "Chapter {existingChapters.length + 1}" - Pages ({newChapterPages.length}):
+										</h5>
+										{#if newChapterPages.length > 0}
+											<div class="pages-grid">
+												{#each newChapterPages as page, index}
+													<div class="page-preview">
+														{#if newChapterPagePreviews[index]}
+															<img
+																src={newChapterPagePreviews[index]}
+																alt="Chapter page {index + 1}"
+															/>
+														{:else}
+															<div class="loading-preview">Loading...</div>
+														{/if}
+														<span class="page-number">Page {index + 1}</span>
+														<button
+															type="button"
+															class="remove-page"
+															on:click={() => removeNewChapterPage(index)}
+														>
+															×
+														</button>
+													</div>
+												{/each}
+											</div>
+										{:else}
+											<div class="no-pages-selected">
+												<p>No pages selected yet. Choose files above to see previews.</p>
+											</div>
+										{/if}
+									</div>
 								</div>
 							</div>
 						{/if}
@@ -430,7 +576,9 @@
 		}
 
 		.existing-pages,
-		.add-pages {
+		.add-pages,
+		.existing-chapters,
+		.add-chapter {
 			margin-top: 1rem;
 			padding: 1rem;
 			background: var(--color--background-alt);
@@ -443,7 +591,8 @@
 			}
 		}
 
-		.no-pages {
+		.no-pages,
+		.no-chapters {
 			margin-top: 1rem;
 			padding: 1rem;
 			background: var(--color--background-alt);
@@ -452,14 +601,27 @@
 			color: var(--color--text-muted);
 		}
 
-		.pages-grid {
+		.chapter-input {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			margin-bottom: 1rem;
+
+			.chapter-pages-input {
+				flex: 1;
+			}
+		}
+
+		.pages-grid,
+		.chapters-grid {
 			display: grid;
 			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 			gap: 1rem;
 		}
 
 		.page-item,
-		.page-preview {
+		.page-preview,
+		.chapter-item {
 			position: relative;
 			border-radius: 8px;
 			overflow: hidden;
@@ -472,7 +634,8 @@
 				display: block;
 			}
 
-			.page-number {
+			.page-number,
+			.chapter-name {
 				position: absolute;
 				bottom: 0;
 				left: 0;
@@ -546,6 +709,24 @@
 		button:disabled {
 			opacity: 0.7;
 			cursor: not-allowed;
+		}
+
+		.loading-preview {
+			width: 100%;
+			height: 150px;
+			background: var(--color--background-alt);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: var(--color--text-muted);
+			font-size: 0.875rem;
+		}
+
+		.no-pages-selected {
+			text-align: center;
+			padding: 2rem;
+			color: var(--color--text-muted);
+			font-style: italic;
 		}
 	}
 </style>

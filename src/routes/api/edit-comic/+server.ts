@@ -20,10 +20,10 @@ export async function PUT({ request }) {
         coverImage = coverImageData as string;
     }
 
-    // Handle new pages
+    // Handle new pages for short stories
     const newPages = formData.getAll('newPages') as File[];
 
-    // Handle pages to delete
+    // Handle pages to delete for short stories
     const pagesToDeleteData = formData.get('pagesToDelete');
     let pagesToDelete: string[] = [];
     if (pagesToDeleteData) {
@@ -31,6 +31,21 @@ export async function PUT({ request }) {
             pagesToDelete = JSON.parse(pagesToDeleteData as string);
         } catch {
             pagesToDelete = [];
+        }
+    }
+
+    // Handle new chapter for series
+    const newChapterName = formData.get('newChapterName') as string;
+    const newChapterPages = formData.getAll('newChapterPages') as File[];
+
+    // Handle chapters to delete for series
+    const chaptersToDeleteData = formData.get('chaptersToDelete');
+    let chaptersToDelete: string[] = [];
+    if (chaptersToDeleteData) {
+        try {
+            chaptersToDelete = JSON.parse(chaptersToDeleteData as string);
+        } catch {
+            chaptersToDelete = [];
         }
     }
 
@@ -179,6 +194,36 @@ export async function PUT({ request }) {
                     const page = newPages[i];
                     const pageNumber = nextPageNumber + i;
                     const pagePath = `/images/comics/${newSlug}/${pageNumber}.jpg`;
+                    const pageBuffer = Buffer.from(await page.arrayBuffer());
+
+                    await sharp(pageBuffer)
+                        .jpeg({ quality: 90 })
+                        .toFile(path.join(process.cwd(), 'static', pagePath.slice(1)));
+                }
+            }
+        } else {
+            // Handle chapter management for series
+            const imagesDir = path.join(process.cwd(), 'static', 'images', 'comics', newSlug);
+
+            // Delete selected chapters
+            for (const chapterName of chaptersToDelete) {
+                const chapterDir = path.join(imagesDir, chapterName);
+                try {
+                    await fs.rm(chapterDir, { recursive: true, force: true });
+                } catch (error) {
+                    console.log(`Chapter ${chapterName} not found, skipping deletion`);
+                }
+            }
+
+            // Add new chapter
+            if (newChapterName && newChapterPages.length > 0) {
+                const chapterDir = path.join(imagesDir, newChapterName);
+                await fs.mkdir(chapterDir, { recursive: true });
+
+                for (let i = 0; i < newChapterPages.length; i++) {
+                    const page = newChapterPages[i];
+                    const pageNumber = i + 1;
+                    const pagePath = `/images/comics/${newSlug}/${newChapterName}/${pageNumber}.jpg`;
                     const pageBuffer = Buffer.from(await page.arrayBuffer());
 
                     await sharp(pageBuffer)

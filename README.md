@@ -1,3 +1,7 @@
+# Please note that this site needs to be ran intandem with its Service
+
+https://github.com/v0ncent/ExtremelyViolentService
+
 # Building & Running Locally
 
 To run it locally, you simply have to run:

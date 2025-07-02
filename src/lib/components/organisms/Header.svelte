@@ -1,7 +1,5 @@
 <script lang="ts">
 	import Logo from '$lib/components/atoms/Logo.svelte';
-	import LoginButton from '$lib/components/molecules/LoginButton.svelte';
-	import { auth } from '$lib/stores/auth';
 	export let showBackground = false;
 </script>
 
@@ -10,9 +8,6 @@
 		<a class="logo" href="/" aria-label="Site logo">
 			<Logo src="/images/site-assets/El-Logo-B.png" alt="Extreme Violence Logo" />
 		</a>
-		<div class="header-nav">
-			<LoginButton />
-		</div>
 	</nav>
 </header>
 

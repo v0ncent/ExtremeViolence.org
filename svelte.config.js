@@ -1,5 +1,5 @@
 // import adapter from '@sveltejs/adapter-static';
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-auto';
 import { vitePreprocess } from '@sveltejs/kit/vite';
 import { mdsvex } from 'mdsvex';
 import rehypeExternalLinks from 'rehype-external-links';
@@ -12,9 +12,7 @@ const extensions = ['.svelte', '.md'];
 const config = {
 	kit: {
 		adapter: adapter(),
-		prerender: {
-			handleHttpError: 'warn'
-		}
+		// Remove prerender config as it's not needed for server-side
 	},
 	preprocess: [
 		vitePreprocess(),

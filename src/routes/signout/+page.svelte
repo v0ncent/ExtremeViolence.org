@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { signOut } from '@auth/sveltekit/client';
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import Button from '$lib/components/atoms/Button.svelte';
 
 	onMount(() => {
 		// Automatically redirect to sign out after a brief delay
-		setTimeout(() => {
-			window.location.href = '/api/auth/signout';
+		setTimeout(async () => {
+			await signOut({ callbackUrl: '/' });
 		}, 1000);
 	});
 
-	function handleSignOut() {
-		window.location.href = '/api/auth/signout';
+	async function handleSignOut() {
+		await signOut({ callbackUrl: '/' });
 	}
 
 	function handleCancel() {

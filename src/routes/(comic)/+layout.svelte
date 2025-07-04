@@ -3,6 +3,7 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
+	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 
 	import type { BlogPost } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
@@ -71,15 +72,17 @@
 				<div class="header">
 					<h1>{post.title}</h1>
 					<p>by Vincent Banks</p>
-					<div class="action-buttons">
-						<a href="/edit-comic/{post.slug}" class="edit-button">Edit Comic</a>
-						<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
-							{isDeleting ? 'Deleting...' : 'Delete Comic'}
-						</button>
-					</div>
-					{#if deleteError}
-						<p class="error">{deleteError}</p>
-					{/if}
+					<AdminGuard>
+						<div class="action-buttons">
+							<a href="/edit-comic/{post.slug}" class="edit-button">Edit Comic</a>
+							<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
+								{isDeleting ? 'Deleting...' : 'Delete Comic'}
+							</button>
+						</div>
+						{#if deleteError}
+							<p class="error">{deleteError}</p>
+						{/if}
+					</AdminGuard>
 				</div>
 
 				{#if post.series}

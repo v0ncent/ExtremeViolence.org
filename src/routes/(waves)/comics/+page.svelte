@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ComicsSection from '$lib/components/organisms/ComicsSection.svelte';
+	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 	import type { BlogPost } from '$lib/utils/types';
 
 	export let data: {
@@ -17,7 +18,9 @@
 <div class="layout-container">
 	<div class="header">
 		<h1>Comics</h1>
-		<a href="/create-comic" class="create-post-button">Create Comic</a>
+		<AdminGuard>
+			<a href="/create-comic" class="create-post-button">Create Comic</a>
+		</AdminGuard>
 	</div>
 	<ComicsSection {posts} />
 </div>

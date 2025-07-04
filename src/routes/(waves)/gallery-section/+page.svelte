@@ -1,5 +1,6 @@
 <script lang="ts">
 	import GallerySection from '$lib/components/organisms/GallerySection.svelte';
+	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 	import type { BlogPost } from '$lib/utils/types';
 
 	export let data: {
@@ -12,7 +13,9 @@
 <div class="layout-container">
 	<div class="header">
 		<h1>Gallery</h1>
-		<a href="/create-gallery-post" class="create-post-button">Create Post</a>
+		<AdminGuard>
+			<a href="/create-gallery-post" class="create-post-button">Create Post</a>
+		</AdminGuard>
 	</div>
 	<GallerySection {posts} />
 </div>

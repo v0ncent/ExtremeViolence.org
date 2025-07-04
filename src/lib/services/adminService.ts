@@ -5,29 +5,64 @@ export interface AdminUser {
     email: string;
 }
 
+interface AdminEmailModel {
+    _id: string;
+    email: string;
+    _class: string;
+}
+
 export class AdminService {
-    static async checkIfAdmin(email: string): Promise<boolean> {
+    private static readonly ADMIN_API_URL = 'http://localhost:8080/admin/getall';
+    private static readonly CLIENT_API_URL = '/api/admin/check-status';
+
+    static async checkAdminStatus(email: string): Promise<boolean> {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/get/${encodeURIComponent(email)}`);
-            return response.ok;
+            // Use the server-side endpoint to avoid CORS issues
+            const response = await fetch(`${this.CLIENT_API_URL}?email=${encodeURIComponent(email)}`);
+
+            if (!response.ok) {
+                console.error('Failed to fetch admin data:', response.statusText);
+                return false;
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Admin check error:', data.error);
+                return false;
+            }
+
+            console.log(`Admin check for ${email}: ${data.isAdmin ? 'ADMIN' : 'USER'}`);
+            return data.isAdmin;
         } catch (error) {
             console.error('Error checking admin status:', error);
             return false;
         }
     }
 
-    static async createAdminEntry(email: string): Promise<boolean> {
+    static async refreshAdminStatus(email: string): Promise<boolean> {
+        return this.checkAdminStatus(email);
+    }
+
+    // Server-side method (used by the API endpoint)
+    static async checkAdminStatusServer(email: string): Promise<boolean> {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/createEntry`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email })
-            });
-            return response.ok;
+            const response = await fetch(this.ADMIN_API_URL);
+
+            if (!response.ok) {
+                console.error('Failed to fetch admin data:', response.statusText);
+                return false;
+            }
+
+            const adminData: AdminEmailModel[] = await response.json();
+
+            // Check if the user's email exists in the admin list
+            const isAdmin = adminData.some(admin => admin.email === email);
+
+            console.log(`Server admin check for ${email}: ${isAdmin ? 'ADMIN' : 'USER'}`);
+            return isAdmin;
         } catch (error) {
-            console.error('Error creating admin entry:', error);
+            console.error('Error checking admin status:', error);
             return false;
         }
     }

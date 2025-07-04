@@ -4,6 +4,7 @@
 	import dateformat from 'dateformat';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
+	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
@@ -66,15 +67,17 @@
 				<div class="header">
 					<h1>{post.title}</h1>
 					<p>by Vincent Banks</p>
-					<div class="action-buttons">
-						<a href="/edit-gallery-post/{post.slug}" class="edit-button">Edit Post</a>
-						<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
-							{isDeleting ? 'Deleting...' : 'Delete Post'}
-						</button>
-					</div>
-					{#if deleteError}
-						<p class="error">{deleteError}</p>
-					{/if}
+					<AdminGuard>
+						<div class="action-buttons">
+							<a href="/edit-gallery-post/{post.slug}" class="edit-button">Edit Post</a>
+							<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
+								{isDeleting ? 'Deleting...' : 'Delete Post'}
+							</button>
+						</div>
+						{#if deleteError}
+							<p class="error">{deleteError}</p>
+						{/if}
+					</AdminGuard>
 				</div>
 			{/if}
 			<div class="content">

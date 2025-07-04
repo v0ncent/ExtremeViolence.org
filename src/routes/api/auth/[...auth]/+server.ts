@@ -1,4 +1,5 @@
 import { auth } from '../../../../hooks.server';
 
-export const GET = auth.GET;
-export const POST = auth.POST;
+// For older versions of Auth.js, we need to handle the requests manually
+export const GET = auth;
+export const POST = auth;

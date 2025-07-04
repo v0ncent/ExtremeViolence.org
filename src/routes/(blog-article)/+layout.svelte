@@ -4,6 +4,7 @@
 	import dateformat from 'dateformat';
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
+	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
 	import type { BlogPost } from '$lib/utils/types';
@@ -86,14 +87,16 @@
 					{#if post.updated}
 						<div class="note">Last updated: {dateformat(post.updated, 'UTC:dd mmmm yyyy')}</div>
 					{/if}
-					<div class="button-group">
-						<button class="edit-button" on:click={handleEdit} disabled={isEditing}>
-							{isEditing ? 'Editing...' : 'Edit Post'}
-						</button>
-						<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
-							{isDeleting ? 'Deleting...' : 'Delete Post'}
-						</button>
-					</div>
+					<AdminGuard>
+						<div class="button-group">
+							<button class="edit-button" on:click={handleEdit} disabled={isEditing}>
+								{isEditing ? 'Editing...' : 'Edit Post'}
+							</button>
+							<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
+								{isDeleting ? 'Deleting...' : 'Delete Post'}
+							</button>
+						</div>
+					</AdminGuard>
 				{/if}
 			</div>
 			{#if post && post.coverImage}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import NewsSection from '$lib/components/organisms/NewsSection.svelte';
+	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 	import type { BlogPost } from '$lib/utils/types';
 
 	export let data: {
@@ -12,7 +13,9 @@
 <div class="layout-container">
 	<div class="header">
 		<h1>News</h1>
-		<a href="/create-post" class="create-post-button">Create Post</a>
+		<AdminGuard>
+			<a href="/create-post" class="create-post-button">Create Post</a>
+		</AdminGuard>
 	</div>
 	{#if newsposts && newsposts.length > 0}
 		<div class="scroll-vertical">

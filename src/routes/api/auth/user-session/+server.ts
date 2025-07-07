@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { AdminService } from '$lib/services/adminService';
 import { AUTH_SECRET } from '$env/static/private';
-import { compactDecrypt } from 'jose';
+import { jwtVerify } from 'jose';
 
 export const GET: RequestHandler = async (event) => {
     try {
@@ -37,69 +37,44 @@ export const GET: RequestHandler = async (event) => {
             });
         }
 
-        console.log('Found session token, length:', sessionToken.length);
+        console.log('Session token value:', sessionToken);
 
         try {
-            // Auth.js uses JWE (JSON Web Encryption) tokens, not JWT
-            // Decrypt the JWE token using the AUTH_SECRET
+            // Verify the JWT using jose
             const secret = new TextEncoder().encode(AUTH_SECRET);
-            const { plaintext } = await compactDecrypt(sessionToken, secret);
-            const sessionData = JSON.parse(new TextDecoder().decode(plaintext));
+            const { payload } = await jwtVerify(sessionToken, secret);
 
-            console.log('Decrypted session data:', sessionData);
+            // Auth.js puts user info in payload.user or payload.sub
+            const user = (payload.user && typeof payload.user === 'object') ? payload.user as Record<string, any> : null;
 
-            if (sessionData && sessionData.user) {
-                const user = sessionData.user;
+            if (user && typeof user.email === 'string') {
+                // Check admin status for the actual user
+                const isAdmin = await AdminService.checkAdminStatusServer(user.email);
 
-                if (user && user.email) {
-                    // Check admin status for the actual user
-                    const isAdmin = await AdminService.checkAdminStatusServer(user.email);
+                // Determine provider from the session data
+                const provider = payload.provider ||
+                    (user.email?.includes('@gmail.com') ? 'google' :
+                        user.email?.includes('@github.com') ? 'github' : 'unknown');
 
-                    // Determine provider from the session data
-                    const provider = sessionData.provider ||
-                        (user.email?.includes('@gmail.com') ? 'google' :
-                            user.email?.includes('@github.com') ? 'github' : 'unknown');
+                const responseData = {
+                    user: {
+                        id: user.id || user.email || '',
+                        name: user.name || '',
+                        email: user.email || '',
+                        image: user.image || undefined
+                    },
+                    provider,
+                    isAdmin
+                };
 
-                    const responseData = {
-                        user: {
-                            id: user.id || user.email || '',
-                            name: user.name || '',
-                            email: user.email || '',
-                            image: user.image || undefined
-                        },
-                        provider,
-                        isAdmin
-                    };
+                console.log(`Session loaded for ${user.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
 
-                    console.log(`Session loaded for ${user.email} (${isAdmin ? 'ADMIN' : 'USER'})`);
-
-                    return new Response(JSON.stringify(responseData), {
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
+                return new Response(JSON.stringify(responseData), {
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
-        } catch (decryptError) {
-            console.log('JWE decryption failed:', decryptError);
-
-            // Provide more detailed error information
-            const errorDetails = {
-                error: 'Failed to decrypt session token',
-                message: decryptError instanceof Error ? decryptError.message : String(decryptError),
-                tokenLength: sessionToken.length,
-                tokenPreview: sessionToken.substring(0, 50) + '...',
-                hasAuthSecret: !!AUTH_SECRET,
-                authSecretLength: AUTH_SECRET ? AUTH_SECRET.length : 0
-            };
-
-            console.error('Session decryption error details:', errorDetails);
-
-            // Fallback: try to decode as base64 to see if it's a different format
-            try {
-                const decoded = Buffer.from(sessionToken, 'base64').toString();
-                console.log('Base64 decoded token structure:', decoded.substring(0, 200) + '...');
-            } catch (decodeError) {
-                console.error('Failed to decode session token:', decodeError);
-            }
+        } catch (verifyError) {
+            console.error('JWT verification failed:', verifyError);
         }
 
         // If all else fails, return null (user not authenticated)

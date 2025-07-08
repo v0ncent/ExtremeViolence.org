@@ -6,36 +6,159 @@
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import Button from '$lib/components/atoms/Button.svelte';
 
-	onMount(() => {
-		// Initialize auth store
-		auth.initialize();
+	type UserData = {
+		_id?: number;
+		userId: string;
+		email: string;
+		authProvider: string;
+		isAdmin: boolean;
+		imagePath?: string;
+		userName?: string;
+	};
 
-		// Check if user is authenticated
-		if (!$auth.user) {
-			// Redirect to login if not authenticated
-			goto('/login');
+	let allUsers: UserData[] = [];
+	let username = '';
+	let usernameError = '';
+	let isAdmin = false;
+	let imagePath = '';
+	let newProfilePhoto: File | null = null;
+	let saveSuccess = false;
+	let currentUser: UserData | null = null;
+	let loading = true;
+
+	async function fetchAllUsers() {
+		try {
+			const res = await fetch('http://localhost:8080/userData/getall');
+			if (!res.ok) throw new Error('Failed to fetch users');
+			const data = await res.json();
+			if (Array.isArray(data)) {
+				allUsers = data.map((u) => ({
+					...u,
+					isAdmin: u.isAdmin ?? u.admin // use isAdmin if present, else admin
+				}));
+			} else {
+				allUsers = [];
+			}
+		} catch (e: unknown) {
+			if (e instanceof Error) {
+				console.error('Error fetching all users:', e, e.message, e.stack);
+			} else {
+				console.error('Error fetching all users:', e);
+			}
+			allUsers = [];
 		}
+	}
 
-		// Refresh admin status when page loads
-		auth.refreshAdminStatus();
-	});
+	function isUsernameUnique(name: string): boolean {
+		if (!currentUser) return false;
+		return !allUsers.some((u) => u.userName === name && u.userId !== currentUser?.userId);
+	}
+
+	async function handleProfilePhotoUpload(): Promise<string> {
+		if (!newProfilePhoto) return imagePath;
+		// Placeholder: You need a backend endpoint to handle this!
+		return `/images/profilephotos/${newProfilePhoto.name}`;
+	}
+
+	async function saveProfile() {
+		usernameError = '';
+		saveSuccess = false;
+		if (!currentUser) return;
+		if (!isUsernameUnique(username)) {
+			usernameError = 'Username already taken.';
+			return;
+		}
+		const updatedImagePath = await handleProfilePhotoUpload();
+		try {
+			// Update userName
+			const resUserName = await fetch(
+				`http://localhost:8080/userData/update/userId/${
+					currentUser.userId
+				}/userName/${encodeURIComponent(username)}`,
+				{
+					method: 'PUT'
+				}
+			);
+			if (!resUserName.ok) {
+				usernameError = 'Failed to update username.';
+				console.error('Failed to update username:', await resUserName.text());
+				return;
+			}
+			// Update imagePath
+			const resImage = await fetch(
+				`http://localhost:8080/userData/update/userId/${
+					currentUser.userId
+				}/imagePath/${encodeURIComponent(updatedImagePath)}`,
+				{
+					method: 'PUT'
+				}
+			);
+			if (!resImage.ok) {
+				usernameError = 'Failed to update profile image.';
+				console.error('Failed to update profile image:', await resImage.text());
+				return;
+			}
+			imagePath = updatedImagePath;
+			saveSuccess = true;
+			await fetchAllUsers();
+
+			// Fetch the latest user profile from backend and update the auth store
+			try {
+				const res = await fetch('http://localhost:8080/userData/getall');
+				if (res.ok && currentUser) {
+					const allUsers: UserData[] = await res.json();
+					const backendUser = allUsers.find((u: UserData) => u.email === currentUser!.email);
+					if (backendUser && auth && auth.setUser && $auth.user) {
+						auth.setUser({
+							...$auth.user,
+							userName: backendUser.userName || '',
+							imagePath: backendUser.imagePath || '',
+							image: backendUser.imagePath || $auth.user.image || ''
+						});
+					}
+				}
+			} catch (e) {
+				console.error('Failed to fetch updated user profile:', e);
+			}
+		} catch (e) {
+			usernameError = e instanceof Error ? e.message : 'Failed to update profile.';
+			console.error('Error updating profile:', e);
+		}
+	}
 
 	async function handleSignOut() {
 		await auth.signOut();
 		goto('/');
 	}
 
-	async function refreshAdminStatus() {
-		await auth.refreshAdminStatus();
+	function onPhotoChange(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (target.files && target.files.length > 0) {
+			newProfilePhoto = target.files[0];
+		}
 	}
 
-	function formatDate(dateString: string) {
-		return new Date(dateString).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
+	onMount(async () => {
+		auth.initialize();
+		const unsubscribe = auth.subscribe(async ($auth) => {
+			if (!$auth.user) {
+				goto('/login');
+				return;
+			}
+			loading = true;
+			await fetchAllUsers();
+			const userEmail = $auth.user?.email;
+			const backendUser = userEmail ? allUsers.find((u) => u.email === userEmail) : null;
+			if (backendUser) {
+				currentUser = backendUser;
+				username = backendUser.userName || backendUser.email.split('@')[0];
+				isAdmin = backendUser.isAdmin;
+				imagePath = backendUser.imagePath || '';
+			}
+			loading = false;
 		});
-	}
+		return () => unsubscribe();
+	});
 </script>
 
 <svelte:head>
@@ -47,24 +170,27 @@
 <main>
 	<div class="profile-page">
 		<div class="container">
-			{#if $auth.user}
+			{#if loading}
+				<div class="loading">
+					<p>Loading profile...</p>
+				</div>
+			{:else if currentUser}
 				<div class="profile-card">
 					<div class="profile-header">
 						<div class="profile-avatar">
-							{#if $auth.user.image}
-								<img src={$auth.user.image} alt="Profile" class="avatar-image" />
+							{#if imagePath}
+								<img src={imagePath} alt="Profile" class="avatar-image" />
 							{:else}
 								<div class="avatar-placeholder">
-									{$auth.user.name?.charAt(0) || $auth.user.email?.charAt(0) || 'U'}
+									{currentUser.email.charAt(0).toUpperCase()}
 								</div>
 							{/if}
 						</div>
 						<div class="profile-info">
-							<h1>{$auth.user.name || 'User'}</h1>
-							<p class="email">{$auth.user.email}</p>
-							<div class="provider-badge">
-								Signed in with {$auth.user.provider}
-							</div>
+							<h1>{username}</h1>
+							{#if isAdmin}
+								<span class="admin-badge">Admin</span>
+							{/if}
 						</div>
 					</div>
 
@@ -74,30 +200,30 @@
 							<div class="detail-grid">
 								<div class="detail-item">
 									<div class="detail-label">User ID</div>
-									<span>{$auth.user.id}</span>
+									<span>{currentUser.userId}</span>
 								</div>
 								<div class="detail-item">
 									<div class="detail-label">Email</div>
-									<span>{$auth.user.email}</span>
+									<span>{currentUser.email}</span>
 								</div>
 								<div class="detail-item">
-									<div class="detail-label">Name</div>
-									<span>{$auth.user.name || 'Not provided'}</span>
+									<div class="detail-label">Username</div>
+									<input bind:value={username} />
+									{#if usernameError}
+										<span class="error">{usernameError}</span>
+									{/if}
 								</div>
 								<div class="detail-item">
-									<div class="detail-label">Authentication Provider</div>
-									<span class="provider-tag">{$auth.user.provider}</span>
-								</div>
-								<div class="detail-item">
-									<div class="detail-label">Admin Status</div>
-									<div class="admin-status-container">
-										<span class="admin-status {$auth.user.isAdmin ? 'admin' : 'user'}">
-											{$auth.user.isAdmin ? 'Administrator' : 'User'}
-										</span>
-										<button class="refresh-button" on:click={refreshAdminStatus}>
-											🔄 Refresh
-										</button>
-									</div>
+									<div class="detail-label">Profile Photo</div>
+									<label class="file-upload-label">
+										<input
+											type="file"
+											accept="image/*"
+											on:change={onPhotoChange}
+											style="display: none;"
+										/>
+										<span class="file-upload-button">Choose Photo</span>
+									</label>
 								</div>
 							</div>
 						</div>
@@ -105,6 +231,12 @@
 						<div class="detail-section">
 							<h2>Account Actions</h2>
 							<div class="action-buttons">
+								<Button color="primary" size="medium" style="solid" on:click={saveProfile}>
+									Save Profile
+								</Button>
+								{#if saveSuccess}
+									<span class="success">Profile updated!</span>
+								{/if}
 								<Button color="secondary" size="medium" style="solid" on:click={handleSignOut}>
 									Sign Out
 								</Button>
@@ -115,13 +247,9 @@
 						</div>
 					</div>
 				</div>
-			{:else if $auth.loading}
-				<div class="loading">
-					<p>Loading profile...</p>
-				</div>
 			{:else}
 				<div class="loading">
-					<p>Redirecting to login...</p>
+					<p>Could not load profile. Please try again.</p>
 				</div>
 			{/if}
 		</div>
@@ -313,6 +441,25 @@
 		&:hover {
 			background: var(--color--accent-hover);
 		}
+	}
+
+	.admin-badge {
+		background: #e67e22;
+		color: #fff;
+		padding: 0.2em 0.7em;
+		border-radius: 1em;
+		font-size: 0.9em;
+		margin-left: 1em;
+	}
+	.error {
+		color: #e74c3c;
+		font-size: 0.9em;
+		margin-left: 0.5em;
+	}
+	.success {
+		color: #27ae60;
+		font-size: 0.9em;
+		margin-left: 0.5em;
 	}
 
 	@media (max-width: 768px) {

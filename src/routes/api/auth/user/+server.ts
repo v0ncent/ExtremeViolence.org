@@ -1,6 +1,7 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { deserializeSession } from "$lib/auth/session";
+import { AdminService } from "$lib/services/adminService";
 
 export const GET: RequestHandler = async (event) => {
     const cookies = event.request.headers.get("cookie");
@@ -22,5 +23,28 @@ export const GET: RequestHandler = async (event) => {
         return json({ user: null });
     }
 
-    return json({ user: session.user });
+    // Fetch user profile from backend
+    let userName = undefined;
+    let imagePath = undefined;
+    try {
+        const res = await fetch("http://localhost:8080/userData/getall");
+        if (res.ok) {
+            const allUsers = await res.json();
+            const backendUser = allUsers.find((u: any) => u.email === session.user.email);
+            if (backendUser) {
+                userName = backendUser.userName;
+                imagePath = backendUser.imagePath;
+            }
+        }
+    } catch (e) {
+        // Ignore errors, fallback to session user only
+    }
+
+    return json({
+        user: {
+            ...session.user,
+            userName,
+            imagePath
+        }
+    });
 }; 

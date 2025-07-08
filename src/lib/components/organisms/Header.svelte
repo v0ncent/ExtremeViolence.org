@@ -61,13 +61,18 @@
 								{$auth.user.name?.charAt(0) || $auth.user.email?.charAt(0) || 'U'}
 							</div>
 						{/if}
-						<span class="user-name">{$auth.user.name || $auth.user.email}</span>
+						<span class="user-name"
+							>{$auth.user.userName || $auth.user.name || $auth.user.email}</span
+						>
 					</div>
 
 					{#if dropdownOpen}
+						<!-- svelte-ignore a11y-click-events-have-key-events -->
 						<div class="dropdown-menu" on:click|stopPropagation>
 							<div class="user-info">
-								<span class="user-name">{$auth.user.name || $auth.user.email}</span>
+								<span class="user-name"
+									>{$auth.user.userName || $auth.user.name || $auth.user.email}</span
+								>
 								<span class="user-role {$auth.user.isAdmin ? 'admin' : 'user'}">
 									{$auth.user.isAdmin ? 'Administrator' : 'User'}
 								</span>

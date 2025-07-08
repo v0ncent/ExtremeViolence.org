@@ -4,6 +4,9 @@ import { AdminService } from '$lib/services/adminService';
 import type { User } from 'lucia';
 
 export interface AuthUser {
+    userName: string;
+    imagePath: string | undefined;
+    userId: any;
     id: string;
     email: string;
     name: string;
@@ -53,7 +56,10 @@ const createAuthStore = () => {
                         name: data.user.name,
                         image: data.user.image,
                         provider: data.user.provider,
-                        isAdmin
+                        isAdmin,
+                        userName: data.user.userName || '',
+                        imagePath: data.user.imagePath || '',
+                        userId: data.user.userId || ''
                     };
 
                     update(state => ({ ...state, user, loading: false, initialized: true }));

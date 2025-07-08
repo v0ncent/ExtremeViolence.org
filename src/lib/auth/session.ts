@@ -1,9 +1,19 @@
 import { dev } from "$app/environment";
 import type { OAuthUser } from "./oauth";
 
+// Generate a new secret every time the server starts
+let SESSION_SECRET: string = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+export function getSessionSecret() {
+    return SESSION_SECRET;
+}
+
 export interface Session {
     user: OAuthUser;
     expires: number;
+    secret: string; // Add this field to tie session to server run
 }
 
 const SESSION_COOKIE_NAME = "auth_session";
@@ -12,12 +22,14 @@ const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
 export function createSession(user: OAuthUser): Session {
     return {
         user,
-        expires: Date.now() + SESSION_DURATION
+        expires: Date.now() + SESSION_DURATION,
+        secret: getSessionSecret()
     };
 }
 
 export function isSessionValid(session: Session): boolean {
-    return session.expires > Date.now();
+    // Session is only valid if not expired AND secret matches current server secret
+    return session.expires > Date.now() && session.secret === getSessionSecret();
 }
 
 export function serializeSession(session: Session): string {
@@ -39,10 +51,12 @@ export function setSessionCookie(session: Session): string {
     const cookieOptions = [
         `${SESSION_COOKIE_NAME}=${serialized}`,
         "HttpOnly",
-        "Secure",
+        // Only set Secure in production
+        !dev ? "Secure" : "",
         "SameSite=Lax",
         `Max-Age=${SESSION_DURATION / 1000}`,
-        dev ? "" : "Domain=localhost"
+        "Path=/"
+        // Do not set Domain for localhost or in dev
     ].filter(Boolean);
 
     return cookieOptions.join("; ");

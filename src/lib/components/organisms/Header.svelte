@@ -2,7 +2,7 @@
 	import Logo from '$lib/components/atoms/Logo.svelte';
 	import Button from '$lib/components/atoms/Button.svelte';
 	import { auth } from '$lib/stores/auth';
-	import { signOut } from '@auth/sveltekit/client';
+
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
@@ -16,7 +16,12 @@
 	});
 
 	async function handleSignOut() {
-		await signOut({ callbackUrl: '/' });
+		try {
+			await fetch('/auth/signout', { method: 'POST' });
+			window.location.href = '/';
+		} catch (error) {
+			console.error('Sign out error:', error);
+		}
 	}
 
 	function toggleDropdown() {

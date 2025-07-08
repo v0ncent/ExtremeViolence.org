@@ -1,8 +1,9 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { AdminService } from '$lib/services/adminService';
+import type { User } from 'lucia';
 
-export interface User {
+export interface AuthUser {
     id: string;
     email: string;
     name: string;
@@ -12,7 +13,7 @@ export interface User {
 }
 
 interface AuthState {
-    user: User | null;
+    user: AuthUser | null;
     loading: boolean;
     initialized: boolean;
 }
@@ -26,7 +27,7 @@ const createAuthStore = () => {
 
     return {
         subscribe,
-        setUser: (user: User) => {
+        setUser: (user: AuthUser) => {
             update(state => ({ ...state, user, initialized: true }));
         },
         setLoading: (loading: boolean) => {
@@ -38,20 +39,20 @@ const createAuthStore = () => {
         initialize: async () => {
             update(state => ({ ...state, loading: true }));
             try {
-                // Use our custom user session endpoint that calls Auth.js
-                const response = await fetch('/api/auth/user-session');
-                const session = await response.json();
+                // Get user session from Lucia
+                const response = await fetch('/api/auth/user');
+                const data = await response.json();
 
-                if (session?.user) {
+                if (data.user) {
                     // Check admin status
-                    const isAdmin = await AdminService.checkAdminStatus(session.user.email);
+                    const isAdmin = await AdminService.checkAdminStatus(data.user.email);
 
-                    const user: User = {
-                        id: session.user.id || session.user.email || '',
-                        email: session.user.email || '',
-                        name: session.user.name || '',
-                        image: session.user.image || undefined,
-                        provider: session.provider || 'google',
+                    const user: AuthUser = {
+                        id: data.user.id,
+                        email: data.user.email,
+                        name: data.user.name,
+                        image: data.user.image,
+                        provider: data.user.provider,
                         isAdmin
                     };
 

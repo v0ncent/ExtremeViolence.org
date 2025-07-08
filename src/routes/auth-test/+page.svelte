@@ -2,51 +2,30 @@
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/stores/auth';
 
-	let envCheck: any = null;
-	let debugInfo: any = null;
-	let sessionInfo: any = null;
-	let envTest: any = null;
+	let userData: any = null;
 	let loading = true;
 
 	onMount(async () => {
 		try {
-			// Check environment variables
-			const envResponse = await fetch('/api/auth/check-env');
-			envCheck = await envResponse.json();
+			// Initialize auth store
+			await auth.initialize();
 
-			// Check detailed environment test
-			const envTestResponse = await fetch('/api/auth/test-env');
-			envTest = await envTestResponse.json();
-
-			// Check debug info
-			const debugResponse = await fetch('/api/auth/debug');
-			debugInfo = await debugResponse.json();
-
-			// Check session info
-			const sessionResponse = await fetch('/api/auth/user-session');
-			sessionInfo = await sessionResponse.json();
+			// Get user data
+			const response = await fetch('/api/auth/user');
+			userData = await response.json();
 		} catch (error) {
-			console.error('Error loading auth test data:', error);
+			console.error('Error loading auth data:', error);
 		} finally {
 			loading = false;
 		}
 	});
 
-	async function signIn() {
-		window.location.href = '/auth/signin/google';
-	}
-
-	async function signOut() {
-		await auth.signOut();
-		window.location.reload();
-	}
-
-	async function clearSession() {
+	async function handleSignOut() {
 		try {
-			await fetch('/api/auth/clear-session', { method: 'POST' });
+			await fetch('/auth/signout', { method: 'POST' });
 			window.location.reload();
 		} catch (error) {
-			console.error('Error clearing session:', error);
+			console.error('Sign out error:', error);
 		}
 	}
 </script>
@@ -57,7 +36,7 @@
 
 <div class="auth-test-page">
 	<div class="container">
-		<h1>Authentication Test Page</h1>
+		<h1>Lucia Authentication Test</h1>
 
 		{#if loading}
 			<div class="loading">
@@ -65,54 +44,7 @@
 			</div>
 		{:else}
 			<div class="test-sections">
-				<!-- Environment Variables -->
-				<div class="test-section">
-					<h2>Environment Variables</h2>
-					{#if envCheck}
-						<div class="status {envCheck.allRequired ? 'success' : 'error'}">
-							{envCheck.message}
-						</div>
-						<pre>{JSON.stringify(envCheck.envCheck, null, 2)}</pre>
-					{:else}
-						<div class="error">Failed to load environment check</div>
-					{/if}
-				</div>
-
-				<!-- Detailed Environment Test -->
-				<div class="test-section">
-					<h2>Detailed Environment Test</h2>
-					{#if envTest}
-						<div class="status {envTest.envInfo.AUTH_SECRET.isValid ? 'success' : 'error'}">
-							{envTest.message}
-						</div>
-						<p><strong>Recommendation:</strong> {envTest.recommendation}</p>
-						<pre>{JSON.stringify(envTest.envInfo, null, 2)}</pre>
-					{:else}
-						<div class="error">Failed to load detailed environment test</div>
-					{/if}
-				</div>
-
-				<!-- Debug Information -->
-				<div class="test-section">
-					<h2>Session Debug</h2>
-					{#if debugInfo}
-						<pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-					{:else}
-						<div class="error">Failed to load debug info</div>
-					{/if}
-				</div>
-
-				<!-- Session Information -->
-				<div class="test-section">
-					<h2>Current Session</h2>
-					{#if sessionInfo}
-						<pre>{JSON.stringify(sessionInfo, null, 2)}</pre>
-					{:else}
-						<div class="error">Failed to load session info</div>
-					{/if}
-				</div>
-
-				<!-- Auth Store -->
+				<!-- Auth Store Status -->
 				<div class="test-section">
 					<h2>Auth Store Status</h2>
 					<div class="auth-status">
@@ -130,16 +62,25 @@
 					</div>
 				</div>
 
+				<!-- API Response -->
+				<div class="test-section">
+					<h2>API Response</h2>
+					{#if userData}
+						<pre>{JSON.stringify(userData, null, 2)}</pre>
+					{:else}
+						<div class="error">Failed to load user data</div>
+					{/if}
+				</div>
+
 				<!-- Actions -->
 				<div class="test-section">
 					<h2>Actions</h2>
 					<div class="actions">
 						{#if $auth.user}
-							<button class="btn btn-secondary" on:click={signOut}>Sign Out</button>
+							<button class="btn btn-secondary" on:click={handleSignOut}>Sign Out</button>
 						{:else}
-							<button class="btn btn-primary" on:click={signIn}>Sign In with Google</button>
+							<a href="/login" class="btn btn-primary">Go to Login</a>
 						{/if}
-						<button class="btn btn-secondary" on:click={clearSession}>Clear Session Cookies</button>
 						<button class="btn btn-secondary" on:click={() => window.location.reload()}
 							>Refresh Page</button
 						>
@@ -152,7 +93,7 @@
 
 <style lang="scss">
 	.auth-test-page {
-		background: var(--color--page-background);
+		background: #f5f5f5;
 		min-height: 100vh;
 		padding: 2rem 1rem;
 	}
@@ -163,14 +104,15 @@
 	}
 
 	h1 {
-		color: var(--color--text);
-		margin-bottom: 2rem;
 		text-align: center;
+		margin-bottom: 2rem;
+		color: #333;
 	}
 
 	.loading {
 		text-align: center;
-		color: var(--color--text-muted);
+		padding: 2rem;
+		color: #666;
 	}
 
 	.test-sections {
@@ -179,56 +121,44 @@
 	}
 
 	.test-section {
-		background: var(--color--card-background);
-		border: 1px solid var(--color--border);
-		border-radius: 8px;
+		background: white;
 		padding: 1.5rem;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
 		h2 {
-			color: var(--color--text);
+			margin-top: 0;
 			margin-bottom: 1rem;
-			font-size: 1.25rem;
+			color: #333;
 		}
-	}
-
-	.status {
-		padding: 0.75rem;
-		border-radius: 4px;
-		margin-bottom: 1rem;
-		font-weight: 500;
-
-		&.success {
-			background: #d4edda;
-			color: #155724;
-			border: 1px solid #c3e6cb;
-		}
-
-		&.error {
-			background: #f8d7da;
-			color: #721c24;
-			border: 1px solid #f5c6cb;
-		}
-	}
-
-	pre {
-		background: var(--color--code-background);
-		border: 1px solid var(--color--border);
-		border-radius: 4px;
-		padding: 1rem;
-		overflow-x: auto;
-		font-size: 0.875rem;
-		color: var(--color--text);
 	}
 
 	.auth-status {
-		color: var(--color--text);
+		p {
+			margin: 0.5rem 0;
+		}
 
 		.user-info {
 			margin-top: 1rem;
 			padding: 1rem;
-			background: var(--color--code-background);
+			background: #f8f9fa;
 			border-radius: 4px;
 		}
+	}
+
+	pre {
+		background: #f8f9fa;
+		padding: 1rem;
+		border-radius: 4px;
+		overflow-x: auto;
+		font-size: 0.875rem;
+	}
+
+	.error {
+		color: #dc3545;
+		padding: 1rem;
+		background: #f8d7da;
+		border-radius: 4px;
 	}
 
 	.actions {
@@ -241,26 +171,27 @@
 		padding: 0.75rem 1.5rem;
 		border: none;
 		border-radius: 4px;
-		cursor: pointer;
-		font-weight: 500;
 		text-decoration: none;
 		display: inline-block;
+		cursor: pointer;
+		font-size: 1rem;
+		transition: background-color 0.2s;
 
 		&.btn-primary {
-			background: var(--color--primary);
+			background: #007bff;
 			color: white;
 
 			&:hover {
-				background: var(--color--primary-hover);
+				background: #0056b3;
 			}
 		}
 
 		&.btn-secondary {
-			background: var(--color--secondary);
-			color: var(--color--text);
+			background: #6c757d;
+			color: white;
 
 			&:hover {
-				background: var(--color--secondary-hover);
+				background: #545b62;
 			}
 		}
 	}

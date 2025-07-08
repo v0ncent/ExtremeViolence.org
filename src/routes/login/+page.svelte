@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { signIn, signOut } from '@auth/sveltekit/client';
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
 
@@ -15,16 +14,17 @@
 
 	async function handleGoogleSignIn() {
 		loading = true;
-		await signIn('google', { callbackUrl: '/profile' });
+		window.location.href = '/auth/google';
 	}
 
 	async function handleGitHubSignIn() {
 		loading = true;
-		await signIn('github', { callbackUrl: '/profile' });
+		window.location.href = '/auth/github';
 	}
 
 	async function handleSignOut() {
-		await signOut({ callbackUrl: '/' });
+		await fetch('/auth/signout', { method: 'POST' });
+		window.location.href = '/';
 	}
 </script>
 

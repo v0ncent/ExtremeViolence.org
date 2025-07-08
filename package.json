@@ -13,8 +13,6 @@
 		"story:dev": "histoire dev",
 		"story:build": "histoire build",
 		"story:preview": "histoire preview",
-		"generate-auth-secret": "node scripts/generate-auth-secret.js",
-		"setup-env": "node setup-env.js",
 		"optimize-images": "image-transmutation --run --sourceFolder './build/images' --targetFolder './build/images' --inputFormats 'jpg' --inputFormats 'jpeg' --inputFormats 'png' --outputFormats 'png' --outputFormats 'webp' --outputFormats 'avif'",
 		"postbuild": "npm run optimize-images && svelte-sitemap --domain https://sveltekit-static-blog-template.vercel.app/",
 		"vercel-sitemap": "svelte-sitemap --out-dir .vercel/output/static --domain https://sveltekit-static-blog-template.vercel.app/",
@@ -47,17 +45,12 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@auth/core": "^0.40.0",
-		"@auth/sveltekit": "^1.10.0",
 		"@fontsource/inter": "^4.5.15",
 		"@fontsource/merriweather": "^4.5.14",
 		"@fontsource/ubuntu-mono": "^4.5.11",
 		"@sveltejs/adapter-auto": "^1.0.3",
-		"@types/jsonwebtoken": "^9.0.10",
 		"gray-matter": "^4.0.3",
 		"html-truncate": "^1.2.2",
-		"jose": "^6.0.11",
-		"jsonwebtoken": "^9.0.2",
 		"marked": "^15.0.12",
 		"nodemailer": "^6.10.1"
 	}

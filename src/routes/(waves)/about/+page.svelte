@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Image from '$lib/components/atoms/Image.svelte';
 
-	let photoSrc = 'images/GarfieldCharacter.webp';
+	let photoSrc = 'images/site-assets/Self-Portrait-GOOD.jpg';
 </script>
 
 <section class="about-container">
@@ -10,13 +10,15 @@
 			src={photoSrc}
 			alt="Portrait of Vincent Banks"
 			formats={['avif', 'webp', 'png']}
-			widths={['250']}
+			widths={['400']}
 		/>
 	</div>
 
 	<div class="bio-text">
 		<h1>About Me</h1>
-		<p>penispenispeenisneinsijdajsdkjas;kldjklasjflhshafsalkjfl;kasjfkljaslk;fjsa;lk</p>
+		<p>My name is Vincent Banks, I draw romance and macabre.</p>
+		<p>I am hoping to cultivate a movement of art like mine that I call Extreme Violence.</p>
+		<p>Please enjoy the site.</p>
 	</div>
 </section>
 
@@ -37,9 +39,8 @@
 
 	.photo-wrapper {
 		flex-shrink: 0;
-		width: 250px;
-		height: 250px;
-		border-radius: 50%;
+		width: 400px;
+		height: 400px;
 		overflow: hidden;
 		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 
@@ -47,7 +48,6 @@
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
-			border-radius: 50%;
 		}
 	}
 

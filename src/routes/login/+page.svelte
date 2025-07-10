@@ -1,15 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
 
 	let loading = false;
+	let errorMessage = '';
 
 	onMount(() => {
-		// Check if user is already logged in by checking for auth cookies
-		// For now, we'll assume they need to log in
-		loading = false;
+		// Check for error messages in URL params
+		const error = $page.url.searchParams.get('error');
+		if (error === 'account_banned') {
+			errorMessage =
+				'Your account has been banned. Please contact an administrator if you believe this is an error.';
+		}
 	});
 
 	async function handleGoogleSignIn() {
@@ -35,12 +40,18 @@
 <Header />
 
 <main>
-	<div class="login-page">
+ 	<div class="login-page">
 		<div class="container">
 			<div class="login-card">
 				<div class="login-content">
 					<h1>Welcome Back</h1>
 					<p>Sign in to your account to continue</p>
+
+					{#if errorMessage}
+						<div class="error-message">
+							<p>{errorMessage}</p>
+						</div>
+					{/if}
 
 					{#if loading}
 						<div class="loading">
@@ -104,6 +115,16 @@
 	.loading {
 		padding: 2rem;
 		color: var(--color--text-muted);
+	}
+
+	.error-message {
+		background: #fee;
+		border: 1px solid #fcc;
+		border-radius: 8px;
+		padding: 1rem;
+		margin-bottom: 1rem;
+		color: #c53030;
+		font-weight: 500;
 	}
 
 	.login-options {

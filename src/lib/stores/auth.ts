@@ -13,6 +13,7 @@ export interface AuthUser {
     image?: string;
     provider: string;
     isAdmin: boolean;
+    banned: boolean;
 }
 
 interface AuthState {
@@ -50,6 +51,16 @@ const createAuthStore = () => {
                     // Check admin status
                     const isAdmin = await AdminService.checkAdminStatus(data.user.email);
 
+                    // Check if user is banned
+                    let isBanned = false;
+                    try {
+                        const bannedResponse = await fetch(`http://localhost:8080/bannedUsers/get/email/${data.user.email}`);
+                        isBanned = bannedResponse.ok;
+                    } catch (e) {
+                        // If banned users API is unreachable, assume not banned
+                        isBanned = false;
+                    }
+
                     const user: AuthUser = {
                         id: data.user.id,
                         email: data.user.email,
@@ -57,6 +68,7 @@ const createAuthStore = () => {
                         image: data.user.image,
                         provider: data.user.provider,
                         isAdmin,
+                        banned: isBanned,
                         userName: data.user.userName || '',
                         imagePath: data.user.imagePath || '',
                         userId: data.user.userId || ''
@@ -80,6 +92,28 @@ const createAuthStore = () => {
                             user: s.user ? { ...s.user, isAdmin } : null
                         }));
                     });
+                }
+                return state;
+            });
+        },
+        checkBannedStatus: async () => {
+            update(state => {
+                if (state.user) {
+                    fetch(`http://localhost:8080/bannedUsers/get/email/${state.user.email}`)
+                        .then(response => {
+                            const isBanned = response.ok;
+                            update(s => ({
+                                ...s,
+                                user: s.user ? { ...s.user, banned: isBanned } : null
+                            }));
+                        })
+                        .catch(() => {
+                            // If banned users API is unreachable, assume not banned
+                            update(s => ({
+                                ...s,
+                                user: s.user ? { ...s.user, banned: false } : null
+                            }));
+                        });
                 }
                 return state;
             });

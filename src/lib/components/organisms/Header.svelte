@@ -83,6 +83,7 @@
 									<a href="/create-post" class="dropdown-item admin-link">Create Post</a>
 									<a href="/create-comic" class="dropdown-item admin-link">Create Comic</a>
 									<a href="/create-gallery-post" class="dropdown-item admin-link">Create Gallery</a>
+									<a href="/user-registry" class="dropdown-item admin-link">User Registry</a>
 								</div>
 							{/if}
 							<button class="dropdown-item" on:click={handleSignOut}> Sign Out </button>

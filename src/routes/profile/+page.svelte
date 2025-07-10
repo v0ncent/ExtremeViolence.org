@@ -12,6 +12,7 @@
 		email: string;
 		authProvider: string;
 		isAdmin: boolean;
+		banned?: boolean;
 		imagePath?: string;
 		userName?: string;
 	};
@@ -32,10 +33,26 @@
 			if (!res.ok) throw new Error('Failed to fetch users');
 			const data = await res.json();
 			if (Array.isArray(data)) {
-				allUsers = data.map((u) => ({
-					...u,
-					isAdmin: u.isAdmin ?? u.admin // use isAdmin if present, else admin
-				}));
+				// Check banned status for each user
+				const usersWithBannedStatus = await Promise.all(
+					data.map(async (u) => {
+						const user = {
+							...u,
+							isAdmin: u.isAdmin ?? u.admin // use isAdmin if present, else admin
+						};
+						// Check if user is banned by email
+						try {
+							const bannedResponse = await fetch(
+								`http://localhost:8080/bannedUsers/get/email/${user.email}`
+							);
+							user.banned = bannedResponse.ok;
+						} catch (e) {
+							user.banned = false;
+						}
+						return user;
+					})
+				);
+				allUsers = usersWithBannedStatus;
 			} else {
 				allUsers = [];
 			}
@@ -138,26 +155,29 @@
 		}
 	}
 
-	onMount(async () => {
-		auth.initialize();
-		const unsubscribe = auth.subscribe(async ($auth) => {
-			if (!$auth.user) {
-				goto('/login');
-				return;
+	onMount(() => {
+		const unsubscribe = auth.subscribe(($auth) => {
+			if ($auth.initialized && !$auth.loading) {
+				if (!$auth.user) {
+					goto('/login');
+					unsubscribe();
+					return;
+				}
+				loading = true;
+				fetchAllUsers().then(() => {
+					const userEmail = $auth.user?.email;
+					const backendUser = userEmail ? allUsers.find((u) => u.email === userEmail) : null;
+					if (backendUser) {
+						currentUser = backendUser;
+						username = backendUser.userName || backendUser.email.split('@')[0];
+						isAdmin = backendUser.isAdmin;
+						imagePath = backendUser.imagePath || '';
+					}
+					loading = false;
+					unsubscribe();
+				});
 			}
-			loading = true;
-			await fetchAllUsers();
-			const userEmail = $auth.user?.email;
-			const backendUser = userEmail ? allUsers.find((u) => u.email === userEmail) : null;
-			if (backendUser) {
-				currentUser = backendUser;
-				username = backendUser.userName || backendUser.email.split('@')[0];
-				isAdmin = backendUser.isAdmin;
-				imagePath = backendUser.imagePath || '';
-			}
-			loading = false;
 		});
-		return () => unsubscribe();
 	});
 </script>
 

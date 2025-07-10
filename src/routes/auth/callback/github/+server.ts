@@ -44,14 +44,37 @@ export const GET: RequestHandler = async (event) => {
         // Fetch admin status from backend
         const isAdmin = await AdminService.checkAdminStatusServer(user.email);
 
+        // Get IP address from request (production ready)
+        let ipAddress = '';
+        const xff = event.request.headers.get('x-forwarded-for');
+        if (xff) {
+            ipAddress = xff.split(',')[0].trim();
+        } else if (typeof event.getClientAddress === 'function') {
+            ipAddress = event.getClientAddress();
+        } else {
+            ipAddress = '';
+        }
+
+        // Check if user is banned
+        let isBanned = false;
+        try {
+            const bannedResponse = await fetch(`http://localhost:8080/bannedUsers/get/email/${user.email}`);
+            isBanned = bannedResponse.ok;
+        } catch (e) {
+            // If banned users API is unreachable, assume not banned
+            isBanned = false;
+        }
+
         if (!backendUser) {
             const newUser = {
                 userId: generateUserId(),
                 email: user.email,
                 authProvider: user.provider,
                 isAdmin, // use isAdmin, not admin
+                banned: isBanned,
                 imagePath: user.image || "",
-                userName: user.email.split("@")[0]
+                userName: user.email.split("@")[0],
+                ipAddress
             };
             try {
                 await fetch("http://localhost:8080/userData/createEntry", {
@@ -64,13 +87,29 @@ export const GET: RequestHandler = async (event) => {
                 console.error("Failed to create user in backend:", e);
             }
         } else {
-            // Always update isAdmin on login using the correct route
+            // Always update isAdmin and banned status on login using the correct route
             try {
                 await fetch(`http://localhost:8080/userData/update/userId/${backendUser.userId}/isAdmin/${isAdmin}`, {
                     method: "PUT"
                 });
             } catch (e) {
                 console.error("Failed to update isAdmin in backend:", e);
+            }
+
+            try {
+                await fetch(`http://localhost:8080/userData/update/userId/${backendUser.userId}/banned/${isBanned}`, {
+                    method: "PUT"
+                });
+            } catch (e) {
+                console.error("Failed to update banned status in backend:", e);
+            }
+            // Optionally update IP address on login
+            try {
+                await fetch(`http://localhost:8080/userData/update/userId/${backendUser.userId}/ipAddress/${encodeURIComponent(ipAddress)}`, {
+                    method: "PUT"
+                });
+            } catch (e) {
+                console.error("Failed to update IP address in backend:", e);
             }
         }
         // --- End User Data Upload Logic ---

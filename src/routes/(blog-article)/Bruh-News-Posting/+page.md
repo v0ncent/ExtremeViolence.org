@@ -2,8 +2,8 @@
 title: Bruh News Posting
 slug: Bruh-News-Posting
 coverImage: /images/posts/teto.jpg
-date: 2025-06-18T04:09:56.630Z
-updated: 2025-06-18T04:09:56.630Z
+date: 2025-07-10T02:41:48.812Z
+updated: 2025-07-10T02:41:48.812Z
 excerpt: News
 tags:
   - news
@@ -15,4 +15,4 @@ tags:
   import Image from "$lib/components/atoms/Image.svelte";
 </script>
 
-THIS IS NOT THE FUCKING SAME
+<p>THIS IS NOT THE FUCKING SAME</p>

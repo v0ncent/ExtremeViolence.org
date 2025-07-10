@@ -26,6 +26,7 @@ export const GET: RequestHandler = async (event) => {
     // Fetch user profile from backend
     let userName = undefined;
     let imagePath = undefined;
+    let userId = undefined;
     try {
         const res = await fetch("http://localhost:8080/userData/getall");
         if (res.ok) {
@@ -34,6 +35,7 @@ export const GET: RequestHandler = async (event) => {
             if (backendUser) {
                 userName = backendUser.userName;
                 imagePath = backendUser.imagePath;
+                userId = backendUser.userId;
             }
         }
     } catch (e) {
@@ -44,7 +46,8 @@ export const GET: RequestHandler = async (event) => {
         user: {
             ...session.user,
             userName,
-            imagePath
+            imagePath,
+            userId
         }
     });
 }; 

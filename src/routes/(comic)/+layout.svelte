@@ -4,6 +4,7 @@
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
+	import Comments from '$lib/components/molecules/Comments.svelte';
 
 	import type { BlogPost } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
@@ -139,6 +140,10 @@
 			<div class="content">
 				<slot />
 			</div>
+
+			{#if post}
+				<Comments postSlug={post.slug} />
+			{/if}
 		</article>
 	</main>
 

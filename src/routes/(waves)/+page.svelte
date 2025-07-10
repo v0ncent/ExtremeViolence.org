@@ -3,6 +3,7 @@
 	import RecentPostings from '$lib/components/organisms/RecentPostings.svelte';
 	import LatestComics from '$lib/components/organisms/LatestComics.svelte';
 	import ContentWarning from '$lib/components/organisms/ContentWarning.svelte';
+	import Foxy from '$lib/components/atoms/Foxy.svelte';
 	import { onMount } from 'svelte';
 	import type { BlogPost } from '$lib/utils/types';
 
@@ -50,6 +51,8 @@
 			{/if}
 		</div>
 	</div>
+
+	<Foxy />
 {/if}
 
 <style lang="scss">

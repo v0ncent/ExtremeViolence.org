@@ -38,9 +38,11 @@
 </script>
 
 <!-- Clickable pixel (stealth mode, random position) -->
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="foxy-pixel" on:click={triggerFoxy} style={pixelStyle} />
 
 <!-- Jumpscare overlay -->
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if showJumpscare}
 	<div class="jumpscare-overlay" on:click={() => (showJumpscare = false)}>
 		<div class="jumpscare-content">

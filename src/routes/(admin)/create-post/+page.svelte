@@ -117,9 +117,9 @@
 										<Image src={coverImage} alt={title || 'Post cover image'} />
 									</div>
 								{/if}
-											<div class="content">
-				{@html content}
-			</div>
+								<div class="content">
+									{@html content}
+								</div>
 							</article>
 						</div>
 					{/if}

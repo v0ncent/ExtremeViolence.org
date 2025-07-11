@@ -8,13 +8,16 @@ export async function load() {
 	// Sort by date (newest first) and add excerpts/previews
 	const newsPosts = allNewsPosts
 		.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-		.map(post => {
+		.map((post) => {
 			// Convert markdown to HTML for preview generation
 			const htmlContent = post.html ? marked.parse(post.html) : '';
 			return {
 				...post,
 				html: htmlContent, // Replace markdown with converted HTML
-				excerpt: post.excerpt !== undefined && post.excerpt !== null ? post.excerpt : 'No excerpt available',
+				excerpt:
+					post.excerpt !== undefined && post.excerpt !== null
+						? post.excerpt
+						: 'No excerpt available',
 				previewHtml: extractPreview(post.html) || '',
 				keywords: [],
 				hidden: false,

@@ -12,4 +12,4 @@ declare global {
 
 /// <reference types="@sveltejs/kit" />
 
-export { };
+export {};

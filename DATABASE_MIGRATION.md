@@ -9,8 +9,9 @@ The news blog post system has been completely overhauled to use a MongoDB databa
 ## Architecture
 
 ### Backend (Spring Boot)
+
 - **Database**: MongoDB
-- **Models**: 
+- **Models**:
   - `NewsContentModel` - Stores news post data
   - `UserContentModel` - Stores user comments and interactions
 - **API Endpoints**:
@@ -22,6 +23,7 @@ The news blog post system has been completely overhauled to use a MongoDB databa
   - `POST /userContent/createEntry` - Create/update user content
 
 ### Frontend (SvelteKit)
+
 - **Service**: `NewsService` - Handles all database operations
 - **Routes**: Dynamic routes using `[slug]` for individual posts
 - **Components**: Updated to work with database data structure
@@ -29,67 +31,75 @@ The news blog post system has been completely overhauled to use a MongoDB databa
 ## Data Models
 
 ### NewsContentModel
+
 ```typescript
 interface NewsPost {
-  id: string;
-  title: string;
-  slug: string;
-  coverImage: string;
-  date: string;
-  postId: string;
-  comments: PostComment[];
-  html: string;
-  excerpt?: string;
-  tags?: string;
+	id: string;
+	title: string;
+	slug: string;
+	coverImage: string;
+	date: string;
+	postId: string;
+	comments: PostComment[];
+	html: string;
+	excerpt?: string;
+	tags?: string;
 }
 ```
 
 ### PostComment
+
 ```typescript
 interface PostComment {
-  postId: string;
-  userId: string;
-  text: string;
-  date: string;
+	postId: string;
+	userId: string;
+	text: string;
+	date: string;
 }
 ```
 
 ### UserContent
+
 ```typescript
 interface UserContent {
-  userId: string;
-  comments: UserComment[];
+	userId: string;
+	comments: UserComment[];
 }
 
 interface UserComment {
-  commentId: string;
-  postId: string;
-  postTitle: string;
-  section: string;
-  text: string;
-  date: string;
+	commentId: string;
+	postId: string;
+	postTitle: string;
+	section: string;
+	text: string;
+	date: string;
 }
 ```
 
 ## Key Changes
 
 ### 1. Post Creation
+
 - **Before**: Created markdown files in `src/routes/(blog-article)/{slug}/+page.md`
 - **After**: Posts are stored in MongoDB via Spring Boot API
 
 ### 2. Post Rendering
+
 - **Before**: Static markdown files with frontmatter
 - **After**: Dynamic routes `[slug]` that fetch from database
 
 ### 3. Comments System
+
 - **Before**: Comments were stored locally
 - **After**: Comments are stored in both news posts and user content collections
 
 ### 4. ID and Date Consistency
+
 - **IDs**: All IDs (postId, commentId) now use `crypto.randomUUID()` format like userIds
 - **Dates**: All dates use ISO format: `2023-04-22T20:45:25.350Z`
 
 ### 5. File Structure Changes
+
 ```
 Removed:
 - src/routes/(blog-article)/+layout.server.ts
@@ -105,18 +115,20 @@ Added:
 ## API Integration
 
 ### Creating Posts
+
 ```typescript
 const result = await NewsService.createPost({
-  title: 'Post Title',
-  slug: 'post-title',
-  coverImage: '/images/posts/image.jpg',
-  html: '<h1>Content</h1>',
-  excerpt: 'Post excerpt',
-  tags: 'tag1,tag2,tag3'
+	title: 'Post Title',
+	slug: 'post-title',
+	coverImage: '/images/posts/image.jpg',
+	html: '<h1>Content</h1>',
+	excerpt: 'Post excerpt',
+	tags: 'tag1,tag2,tag3'
 });
 ```
 
 ### Fetching Posts
+
 ```typescript
 // Get all posts
 const posts = await NewsService.getAllPosts();
@@ -126,6 +138,7 @@ const post = await NewsService.getPostBySlug('post-slug');
 ```
 
 ### Managing Comments
+
 ```typescript
 // Add comment
 await NewsService.addComment(postId, userId, commentText);
@@ -158,6 +171,7 @@ await NewsService.deleteComment(postId, commentId);
 ## Testing
 
 Run the test script to verify the system:
+
 ```bash
 node test-database.js
 ```
@@ -174,6 +188,7 @@ node test-database.js
 ### Error Handling
 
 The system includes comprehensive error handling:
+
 - Network errors are caught and logged
 - Database errors return appropriate HTTP status codes
 - Frontend displays user-friendly error messages
@@ -184,4 +199,4 @@ The system includes comprehensive error handling:
 2. **Caching**: Redis caching for better performance
 3. **Analytics**: Track post views and user engagement
 4. **Media Management**: Better image and file handling
-5. **SEO Optimization**: Dynamic meta tags and structured data 
+5. **SEO Optimization**: Dynamic meta tags and structured data

@@ -1,9 +1,6 @@
 import features from '$lib/data/features';
 import { NewsService } from '$lib/services/newsService';
-import {
-	filteredComicGalleryPosts,
-	filteredComicPosts
-} from '$lib/data/blog-posts';
+import { filteredComicGalleryPosts, filteredComicPosts } from '$lib/data/blog-posts';
 import { marked } from 'marked';
 
 export const prerender = false;
@@ -19,9 +16,13 @@ export async function load({ url }) {
 	const newsposts = allNewsPosts
 		.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 		.slice(0, 4)
-		.map(post => {
+		.map((post) => {
 			// Convert markdown to HTML for preview generation
-			const htmlContent = post.html ? (typeof marked.parse === 'function' ? marked.parse(post.html) : '') : '';
+			const htmlContent = post.html
+				? typeof marked.parse === 'function'
+					? marked.parse(post.html)
+					: ''
+				: '';
 			const htmlString = typeof htmlContent === 'string' ? htmlContent : '';
 			// Use the first paragraph of the HTML as previewHtml
 			let previewHtml = '';
@@ -33,7 +34,9 @@ export async function load({ url }) {
 					// fallback: use first 1000 chars of HTML
 					const text = htmlString.replace(/<[^>]*>/g, '');
 					if (text.length > 1000) {
-						previewHtml = text.substring(0, 1000) + '<span style="color: red; font-weight: 500; cursor: pointer;"> ...Read More!</span>';
+						previewHtml =
+							text.substring(0, 1000) +
+							'<span style="color: red; font-weight: 500; cursor: pointer;"> ...Read More!</span>';
 					} else {
 						previewHtml = text;
 					}
@@ -42,7 +45,10 @@ export async function load({ url }) {
 			return {
 				...post,
 				html: htmlString, // Replace markdown with converted HTML
-				excerpt: post.excerpt !== undefined && post.excerpt !== null ? post.excerpt : 'No excerpt available',
+				excerpt:
+					post.excerpt !== undefined && post.excerpt !== null
+						? post.excerpt
+						: 'No excerpt available',
 				previewHtml,
 				keywords: [],
 				hidden: false,

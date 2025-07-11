@@ -13,13 +13,16 @@ export async function GET() {
 	// Sort by date (newest first) and add excerpts
 	const filteredPosts = allNewsPosts
 		.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-		.map(post => {
+		.map((post) => {
 			// Convert markdown to HTML for RSS content
 			const htmlContent = post.html ? marked.parse(post.html) : '';
 			return {
 				...post,
 				html: htmlContent, // Replace markdown with converted HTML
-				excerpt: post.excerpt !== undefined && post.excerpt !== null ? post.excerpt : 'No excerpt available',
+				excerpt:
+					post.excerpt !== undefined && post.excerpt !== null
+						? post.excerpt
+						: 'No excerpt available',
 				keywords: [],
 				hidden: false,
 				updated: post.date,
@@ -73,8 +76,8 @@ const xml = (posts: BlogPost[]) => `
       <height>32</height>
     </image>
     ${posts
-		.map(
-			(post) => `
+			.map(
+				(post) => `
         <item>
           <guid>${siteBaseUrl}/${post.slug}</guid>
           <title>${post.title}</title>
@@ -94,17 +97,19 @@ const xml = (posts: BlogPost[]) => `
 
             ${post.html}
           ]]></content:encoded>
-          ${post.coverImage
-					? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${siteBaseUrl}/${post.coverImage}"/>`
-					: ''
-				}
-          ${post.coverImage
-					? `<media:content xmlns:media="http://search.yahoo.com/mrss/" medium="image" url="${siteBaseUrl}/${post.coverImage}"/>`
-					: ''
-				}          
+          ${
+						post.coverImage
+							? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${siteBaseUrl}/${post.coverImage}"/>`
+							: ''
+					}
+          ${
+						post.coverImage
+							? `<media:content xmlns:media="http://search.yahoo.com/mrss/" medium="image" url="${siteBaseUrl}/${post.coverImage}"/>`
+							: ''
+					}          
         </item>
       `
-		)
-		.join('')}
+			)
+			.join('')}
   </channel>
 </rss>`;

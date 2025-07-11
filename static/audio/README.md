@@ -10,6 +10,7 @@ To complete the FNAF jumpscare easter egg, you need to:
 ## How to download and convert:
 
 ### Option 1: Using yt-dlp (recommended)
+
 ```bash
 # Install yt-dlp if you haven't already
 pip install yt-dlp
@@ -22,12 +23,14 @@ mv jumpscare-sound.mp3 static/audio/
 ```
 
 ### Option 2: Manual download
+
 1. Use a YouTube to MP3 converter website
 2. Download the audio from the video
 3. Save it as `jumpscare-sound.mp3` in this directory
 
 ## After setting up the audio:
+
 1. Open `src/lib/components/atoms/EasterEgg.svelte`
 2. Find the line: `// audio.src = '/audio/jumpscare-sound.mp3';`
 3. Remove the `//` to uncomment it
-4. The easter egg will now play the audio when triggered! 
+4. The easter egg will now play the audio when triggered!

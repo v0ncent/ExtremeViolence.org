@@ -11,7 +11,7 @@ const extensions = ['.svelte', '.md'];
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	kit: {
-		adapter: adapter(),
+		adapter: adapter()
 		// Remove prerender config as it's not needed for server-side
 	},
 	preprocess: [

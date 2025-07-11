@@ -1,12 +1,10 @@
 import { writable } from 'svelte/store';
-import { browser } from '$app/environment';
 import { AdminService } from '$lib/services/adminService';
-import type { User } from 'lucia';
 
 export interface AuthUser {
     userName: string;
     imagePath: string | undefined;
-    userId: any;
+    _id: string; // Canonical user ID
     id: string;
     email: string;
     name: string;
@@ -14,6 +12,7 @@ export interface AuthUser {
     provider: string;
     isAdmin: boolean;
     banned: boolean;
+    userId?: any; // Optional, for legacy support
 }
 
 interface AuthState {
@@ -71,7 +70,8 @@ const createAuthStore = () => {
                         banned: isBanned,
                         userName: data.user.userName || '',
                         imagePath: data.user.imagePath || '',
-                        userId: data.user.userId || ''
+                        _id: data.user._id || '',
+                        userId: data.user.userId || '' // Optional, for legacy
                     };
 
                     update(state => ({ ...state, user, loading: false, initialized: true }));

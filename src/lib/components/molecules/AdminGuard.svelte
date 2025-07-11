@@ -8,7 +8,7 @@
 
 	onMount(() => {
 		// Subscribe to auth store to get admin status
-		const unsubscribe = auth.subscribe(state => {
+		const unsubscribe = auth.subscribe((state) => {
 			isAdmin = state.user?.isAdmin || false;
 		});
 

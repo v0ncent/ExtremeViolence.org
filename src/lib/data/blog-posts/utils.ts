@@ -44,13 +44,13 @@ export const filterPosts = (posts: BlogPost[]) => {
 			const relatedPosts = getRelatedNewsPosts(posts, post);
 
 			// for news articles showing more in the card we truncate the
-			const prieviewHtml = post.html ? extractPreview(post.html) : undefined;
+			const previewHtml = post.html ? extractPreview(post.html) : undefined;
 
 			return {
 				...post,
 				readingTime: readingTimeResult ? readingTimeResult.text : '',
 				relatedPosts: relatedPosts,
-				prieviewHtml: prieviewHtml
+				previewHtml: previewHtml
 			} as BlogPost;
 		});
 };

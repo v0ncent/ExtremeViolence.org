@@ -2,93 +2,82 @@
 	import { auth } from '$lib/stores/auth';
 	import Button from '$lib/components/atoms/Button.svelte';
 	import { onMount } from 'svelte';
+	import { NewsService } from '$lib/services/newsService';
+	import type { PostComment, UserContentComment } from '$lib/utils/types';
 
 	export let postSlug: string;
+	export let postId: string;
 
 	// Special creator account details
 	const CREATOR_EMAIL = 'vincentlikesrobots@gmail.com';
-	const CREATOR_USER_ID = '1959c835-cee9-4d26-b231-f7007a8fcfb4';
+	const CREATOR_USER_ID = 'b1f16a98-7540-4ab8-9201-bca6a44e0b19';
 
-	interface Comment {
-		id: string;
-		content: string;
-		author: {
-			userName: string;
-			email: string;
-			imagePath?: string;
-			isAdmin: boolean;
-			userId?: string;
-		};
-		timestamp: Date;
-	}
-
-	function isCreator(user: any): boolean {
-		if (!user || user.email !== CREATOR_EMAIL) {
-			return false;
-		}
-
-		// Check multiple possible field names for the user ID
-		const userId = user.userId || user.id || user._id;
-		console.log(
-			'Checking creator - email:',
-			user.email,
-			'userId:',
-			userId,
-			'expected:',
-			CREATOR_USER_ID
-		);
-
-		return userId === CREATOR_USER_ID;
-	}
-
-	let comments: Comment[] = [];
+	// Remove local Comment interface and use backend types for mapping
+	let comments: PostComment[] = [];
 	let newComment = '';
 	let isSubmitting = false;
 	let currentUser: any = null;
 
-	onMount(() => {
+	onMount(async () => {
 		const unsubscribe = auth.subscribe(($auth) => {
 			if ($auth.user) {
 				currentUser = $auth.user;
 				console.log('Current user:', currentUser);
-				console.log('Is creator?', isCreator(currentUser));
 			}
 		});
+
+		// Load existing comments from database
+		await loadComments();
 
 		return unsubscribe;
 	});
 
-	function addComment() {
+	async function loadComments() {
+		try {
+			const post = await NewsService.getPostById(postId);
+			if (post) {
+				comments = post.comments;
+			}
+		} catch (error) {
+			console.error('Error loading comments:', error);
+		}
+	}
+
+	async function addComment() {
 		if (!newComment.trim() || !currentUser || isSubmitting) return;
 
 		isSubmitting = true;
 
-		const comment: Comment = {
-			id: Date.now().toString(),
-			content: newComment.trim(),
-			author: {
-				userName: currentUser.userName || currentUser.email.split('@')[0],
-				email: currentUser.email,
-				imagePath: currentUser.imagePath,
-				isAdmin: currentUser.isAdmin,
-				userId: currentUser.userId
-			},
-			timestamp: new Date()
-		};
+		try {
+			// Add comment to database
+			const success = await NewsService.addComment(
+				postId,
+				currentUser.userId || currentUser.id,
+				newComment.trim()
+			);
 
-		comments = [comment, ...comments];
-		newComment = '';
-		isSubmitting = false;
+			if (success) {
+				// Reload comments to get the updated list
+				await loadComments();
+				newComment = '';
+			} else {
+				console.error('Failed to add comment');
+			}
+		} catch (error) {
+			console.error('Error adding comment:', error);
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
-	function formatDate(date: Date): string {
+	function formatDate(date: string): string {
 		return new Intl.DateTimeFormat('en-US', {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric',
 			hour: '2-digit',
 			minute: '2-digit'
-		}).format(date);
+		}).format(new Date(date));
 	}
 </script>
 
@@ -97,41 +86,53 @@
 
 	{#if currentUser}
 		<div class="comment-form">
-			<div class="user-info {isCreator(currentUser) ? 'creator-user-info' : ''}">
-				{#if isCreator(currentUser)}
+			{#if currentUser._id === CREATOR_USER_ID}
+				<div class="user-info creator-user-info" style="position: relative;">
 					<div class="roaring-flame-background">
 						<div class="flame-layer flame-layer-1" />
 						<div class="flame-layer flame-layer-2" />
 						<div class="flame-layer flame-layer-3" />
 						<div class="flame-layer flame-layer-4" />
-						<div class="blue-sparks">
-							<div class="spark spark-1" />
-							<div class="spark spark-2" />
-							<div class="spark spark-3" />
-							<div class="spark spark-4" />
-							<div class="spark spark-5" />
-							<div class="spark spark-6" />
-						</div>
 					</div>
-				{/if}
-				<div class="user-avatar {isCreator(currentUser) ? 'creator-avatar' : ''}">
-					{#if currentUser.imagePath}
-						<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
-					{:else}
-						<div class="avatar-placeholder">
-							{currentUser.email.charAt(0).toUpperCase()}
-						</div>
-					{/if}
+					<div class="user-avatar">
+						{#if currentUser.imagePath}
+							<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
+						{:else}
+							<div class="avatar-placeholder">
+								{currentUser.email.charAt(0).toUpperCase()}
+							</div>
+						{/if}
+					</div>
+					<div class="user-details">
+						<span class="username creator-name">
+							{currentUser.userName || currentUser.email.split('@')[0]}
+						</span>
+						{#if currentUser.isAdmin}
+							<span class="admin-badge">Admin</span>
+						{/if}
+					</div>
 				</div>
-				<div class="user-details">
-					<span class="username {isCreator(currentUser) ? 'creator-name' : ''}">
-						{currentUser.userName || currentUser.email.split('@')[0]}
-					</span>
-					{#if currentUser.isAdmin}
-						<span class="admin-badge">Admin</span>
-					{/if}
+			{:else}
+				<div class="user-info">
+					<div class="user-avatar">
+						{#if currentUser.imagePath}
+							<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
+						{:else}
+							<div class="avatar-placeholder">
+								{currentUser.email.charAt(0).toUpperCase()}
+							</div>
+						{/if}
+					</div>
+					<div class="user-details">
+						<span class="username">
+							{currentUser.userName || currentUser.email.split('@')[0]}
+						</span>
+						{#if currentUser.isAdmin}
+							<span class="admin-badge">Admin</span>
+						{/if}
+					</div>
 				</div>
-			</div>
+			{/if}
 			<div class="form-content">
 				<textarea
 					bind:value={newComment}
@@ -165,71 +166,34 @@
 				<p>No comments yet. Be the first to comment!</p>
 			</div>
 		{:else}
-			{#each comments as comment (comment.id)}
-				<div class="comment">
-					<div class="comment-header">
-						<div
-							class="comment-author {isCreator({
-								email: comment.author.email,
-								userId: comment.author.userId
-							})
-								? 'creator-comment-author'
-								: ''}"
-						>
-							{#if isCreator({ email: comment.author.email, userId: comment.author.userId })}
-								<div class="roaring-flame-background">
-									<div class="flame-layer flame-layer-1" />
-									<div class="flame-layer flame-layer-2" />
-									<div class="flame-layer flame-layer-3" />
-									<div class="flame-layer flame-layer-4" />
-									<div class="blue-sparks">
-										<div class="spark spark-1" />
-										<div class="spark spark-2" />
-										<div class="spark spark-3" />
-										<div class="spark spark-4" />
-										<div class="spark spark-5" />
-										<div class="spark spark-6" />
-									</div>
-								</div>
-							{/if}
-							<div
-								class="author-avatar {isCreator({
-									email: comment.author.email,
-									userId: comment.author.userId
-								})
-									? 'creator-avatar'
-									: ''}"
-							>
-								{#if comment.author.imagePath}
-									<img src={comment.author.imagePath} alt="Profile" class="avatar-image" />
-								{:else}
-									<div class="avatar-placeholder">
-										{comment.author.email.charAt(0).toUpperCase()}
-									</div>
-								{/if}
-							</div>
-							<div class="author-info">
-								<span
-									class="author-name {isCreator({
-										email: comment.author.email,
-										userId: comment.author.userId
-									})
-										? 'creator-name'
-										: ''}"
-								>
-									{comment.author.userName}
-								</span>
-								{#if comment.author.isAdmin}
-									<span class="admin-badge">Admin</span>
-								{/if}
-								<span class="comment-date">{formatDate(comment.timestamp)}</span>
-							</div>
+			{#each comments as comment (comment.date)}
+				{#if comment.userId === CREATOR_USER_ID}
+					<div class="comment creator-comment-author" style="position: relative;">
+						<div class="roaring-flame-background">
+							<div class="flame-layer flame-layer-1" />
+							<div class="flame-layer flame-layer-2" />
+							<div class="flame-layer flame-layer-3" />
+							<div class="flame-layer flame-layer-4" />
+						</div>
+						<div class="comment-header">
+							<span class="username creator-name">{comment.userId}</span>
+							<span class="comment-date">{formatDate(comment.date)}</span>
+						</div>
+						<div class="comment-content">
+							<p>{comment.text}</p>
 						</div>
 					</div>
-					<div class="comment-content">
-						<p>{comment.content}</p>
+				{:else}
+					<div class="comment">
+						<div class="comment-header">
+							<span class="username">{comment.userId}</span>
+							<span class="comment-date">{formatDate(comment.date)}</span>
+						</div>
+						<div class="comment-content">
+							<p>{comment.text}</p>
+						</div>
 					</div>
-				</div>
+				{/if}
 			{/each}
 		{/if}
 	</div>

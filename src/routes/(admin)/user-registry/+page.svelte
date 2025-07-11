@@ -25,6 +25,7 @@
 	let sortBy: 'email' | 'userName' | 'authProvider' | 'isAdmin' | 'banned' = 'email';
 	let sortOrder: 'asc' | 'desc' = 'asc';
 	let banningUserId: string | null = null;
+	let adminEmails: string[] = [];
 
 	// Filtered and sorted users
 	$: filteredUsers = users
@@ -58,24 +59,37 @@
 			}
 		});
 
+	async function fetchAdminEmails() {
+		try {
+			const res = await fetch('http://localhost:8080/admin/getall');
+			if (!res.ok) throw new Error('Failed to fetch admin emails');
+			const data = await res.json();
+			if (Array.isArray(data)) {
+				adminEmails = data.map((a) => a.email);
+			} else {
+				adminEmails = [];
+			}
+		} catch (e) {
+			adminEmails = [];
+		}
+	}
+
 	async function fetchUsers() {
 		try {
 			loading = true;
 			error = '';
-
+			await fetchAdminEmails();
 			const response = await fetch('http://localhost:8080/userData/getall');
 			if (!response.ok) {
 				throw new Error('Failed to fetch users');
 			}
-
 			const data = await response.json();
 			if (Array.isArray(data)) {
-				// Check banned status for each user
 				const usersWithBannedStatus = await Promise.all(
 					data.map(async (u) => {
 						const user = {
 							...u,
-							isAdmin: u.isAdmin ?? u.admin // handle both isAdmin and admin fields
+							userId: u.userId || u.id || u._id
 						};
 						// Check if user is banned by email
 						try {
@@ -86,6 +100,8 @@
 						} catch (e) {
 							user.banned = false;
 						}
+						// Compute isAdmin from adminEmails
+						user.isAdmin = adminEmails.includes(user.email);
 						return user;
 					})
 				);
@@ -214,8 +230,8 @@
 
 						<div class="stats">
 							<span>Total Users: {users.length}</span>
-							<span>Admins: {users.filter((u) => u.isAdmin).length}</span>
-							<span>Regular Users: {users.filter((u) => !u.isAdmin).length}</span>
+							<span>Admins: {users.filter((u) => String(u.isAdmin) === 'true').length}</span>
+							<span>Regular Users: {users.filter((u) => String(u.isAdmin) !== 'true').length}</span>
 							<span>Banned: {users.filter((u) => u.banned).length}</span>
 						</div>
 					</div>
@@ -268,8 +284,10 @@
 												</span>
 											</td>
 											<td class="role-cell">
-												<span class="role-badge {user.isAdmin ? 'admin' : 'user'}">
-													{user.isAdmin ? 'Admin' : 'User'}
+												<span
+													class="role-badge {String(user.isAdmin) === 'true' ? 'admin' : 'user'}"
+												>
+													{String(user.isAdmin) === 'true' ? 'Admin' : 'User'}
 												</span>
 											</td>
 											<td class="status-cell">

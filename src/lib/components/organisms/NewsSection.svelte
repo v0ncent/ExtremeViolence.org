@@ -14,10 +14,10 @@
 			<BlogPostCard
 				slug={post.slug}
 				title={post.title}
-				excerpt={post.excerpt}
+				excerpt={post.excerpt || ''}
 				coverImage={post.coverImage}
 				showImage={true}
-				previewHtml={post.prieviewHtml}
+				previewHtml={post.previewHtml}
 			/>
 		{/each}
 	</div>

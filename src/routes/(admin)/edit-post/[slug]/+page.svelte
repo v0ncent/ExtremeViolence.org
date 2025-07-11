@@ -5,30 +5,16 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import Image from '$lib/components/atoms/Image.svelte';
 	import dateformat from 'dateformat';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { NewsPost } from '$lib/services/newsService';
 
-	export let data: { post: BlogPost };
+	export let data: { post: NewsPost };
 
 	let title = data.post.title;
-	let excerpt = data.post.excerpt;
 	let content = data.post.html || '';
 	let coverImage = data.post.coverImage;
-	let tags: string[] = data.post.tags || [];
-	let currentTag = '';
 	let error = '';
 	let loading = false;
 	let showPreview = false;
-
-	function addTag() {
-		if (currentTag && !tags.includes(currentTag)) {
-			tags = [...tags, currentTag];
-			currentTag = '';
-		}
-	}
-
-	function removeTag(tag: string) {
-		tags = tags.filter((t) => t !== tag);
-	}
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -39,10 +25,8 @@
 			const formData = new FormData();
 			formData.append('slug', data.post.slug);
 			formData.append('title', title);
-			formData.append('excerpt', excerpt);
 			formData.append('content', content);
 			formData.append('coverImage', coverImage);
-			formData.append('tags', tags.join(','));
 
 			const response = await fetch('/api/edit-post', {
 				method: 'PUT',
@@ -88,11 +72,6 @@
 						</div>
 
 						<div class="form-group">
-							<label for="excerpt">Excerpt</label>
-							<textarea id="excerpt" bind:value={excerpt} required />
-						</div>
-
-						<div class="form-group">
 							<label for="content">Content</label>
 							<textarea id="content" bind:value={content} required />
 						</div>
@@ -113,27 +92,6 @@
 										"/images/posts/image-name.png")
 									</p>
 								</div>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="tags">Tags</label>
-							<div class="tags-input">
-								<input
-									type="text"
-									id="tags"
-									bind:value={currentTag}
-									on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-								/>
-								<button type="button" on:click={addTag}>Add Tag</button>
-							</div>
-							<div class="tags-list">
-								{#each tags as tag}
-									<span class="tag">
-										{tag}
-										<button type="button" on:click={() => removeTag(tag)}>×</button>
-									</span>
-								{/each}
 							</div>
 						</div>
 
@@ -167,13 +125,6 @@
 								<div class="content">
 									{@html content}
 								</div>
-								{#if tags.length > 0}
-									<div class="tags">
-										{#each tags as tag}
-											<span class="tag">{tag}</span>
-										{/each}
-									</div>
-								{/if}
 							</article>
 						</div>
 					{/if}

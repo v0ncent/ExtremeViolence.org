@@ -87,32 +87,23 @@
 		}
 		const updatedImagePath = await handleProfilePhotoUpload();
 		try {
-			// Update userName
-			const resUserName = await fetch(
-				`http://localhost:8080/userData/update/userId/${
-					currentUser.userId
-				}/userName/${encodeURIComponent(username)}`,
-				{
-					method: 'PUT'
-				}
-			);
-			if (!resUserName.ok) {
-				usernameError = 'Failed to update username.';
-				console.error('Failed to update username:', await resUserName.text());
-				return;
-			}
-			// Update imagePath
-			const resImage = await fetch(
-				`http://localhost:8080/userData/update/userId/${
-					currentUser.userId
-				}/imagePath/${encodeURIComponent(updatedImagePath)}`,
-				{
-					method: 'PUT'
-				}
-			);
-			if (!resImage.ok) {
-				usernameError = 'Failed to update profile image.';
-				console.error('Failed to update profile image:', await resImage.text());
+			// Update user with complete model
+			const updatedUser = {
+				...currentUser,
+				userName: username,
+				imagePath: updatedImagePath
+			};
+
+			const resUser = await fetch(`http://localhost:8080/userData/update`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(updatedUser)
+			});
+			if (!resUser.ok) {
+				usernameError = 'Failed to update user profile.';
+				console.error('Failed to update user profile:', await resUser.text());
 				return;
 			}
 			imagePath = updatedImagePath;

@@ -27,15 +27,18 @@ export const GET: RequestHandler = async (event) => {
     let userName = undefined;
     let imagePath = undefined;
     let userId = undefined;
+    let isAdmin = false;
+    let _id = undefined;
     try {
-        const res = await fetch("http://localhost:8080/userData/getall");
+        const res = await fetch(`http://localhost:8080/userData/get/email/${encodeURIComponent(session.user.email)}`);
         if (res.ok) {
-            const allUsers = await res.json();
-            const backendUser = allUsers.find((u: any) => u.email === session.user.email);
+            const backendUser = await res.json();
             if (backendUser) {
                 userName = backendUser.userName;
                 imagePath = backendUser.imagePath;
                 userId = backendUser.userId;
+                isAdmin = backendUser.isAdmin ?? backendUser.admin ?? false;
+                _id = backendUser.id; // Use 'id' from backend
             }
         }
     } catch (e) {
@@ -47,7 +50,9 @@ export const GET: RequestHandler = async (event) => {
             ...session.user,
             userName,
             imagePath,
-            userId
+            userId,
+            isAdmin,
+            _id
         }
     });
 }; 

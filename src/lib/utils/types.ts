@@ -22,20 +22,70 @@ export type Feature = {
 	tags: TagType[];
 };
 
-export type BlogPost = {
-	[x: string]: any;
-	keywords: string[];
-	hidden: boolean;
-	slug: string;
-	title: string;
+// --- Backend-aligned Models ---
+
+// Base Model (all have UUID id)
+export interface BaseModel {
+	id: string; // UUID
+}
+
+// UserDataModel
+export interface UserDataModel extends BaseModel {
+	email: string;
+	authProvider: string;
+	isAdmin: boolean;
+	imagePath: string;
+	userName: string;
+	banned: boolean;
+	ipAddress: string;
+}
+
+// UserContentModel
+export interface UserContentModel extends BaseModel {
+	userId: string; // UUID of the user
+	comments: UserContentComment[];
+}
+
+export interface UserContentComment {
+	commentId: string; // UUID
+	postId: string; // UUID of the post
+	postTitle: string;
+	section: string;
+	text: string;
 	date: string;
-	updated: string;
-	excerpt: string;
-	prieviewHtml: string;
-	html: string | undefined;
-	relatedPosts: BlogPost[];
+}
+
+// ContentModel (abstract, but used for News, etc.)
+export interface ContentModel extends BaseModel {
+	title: string;
+	slug: string;
+	date: string;
 	coverImage: string;
-	width: number;
-	height: number;
-	series: boolean;
-};
+	postId: string; // UUID
+	comments: PostComment[];
+	excerpt: string;
+	tags: string;
+}
+
+export interface PostComment {
+	postId: string; // UUID of the post
+	userId: string; // UUID of the user
+	text: string;
+	date: string;
+}
+
+// NewsContentModel
+export interface NewsContentModel extends ContentModel {
+	html: string;
+}
+
+// BannedUsersModel
+export interface BannedUsersModel extends BaseModel {
+	email: string;
+	userId: string; // UUID of the user
+	ipAddress: string;
+}
+
+// --- Deprecated/Legacy ---
+// Use NewsContentModel or ContentModel instead
+// export type BlogPost = { ... } // Deprecated

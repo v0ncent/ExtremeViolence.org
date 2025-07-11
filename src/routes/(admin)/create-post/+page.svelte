@@ -7,26 +7,11 @@
 	import dateformat from 'dateformat';
 
 	let title = '';
-	let slug = '';
-	let excerpt = '';
 	let content = '';
 	let coverImage = '';
-	let tags: string[] = [];
-	let currentTag = '';
 	let error = '';
 	let loading = false;
 	let showPreview = false;
-
-	function addTag() {
-		if (currentTag && !tags.includes(currentTag)) {
-			tags = [...tags, currentTag];
-			currentTag = '';
-		}
-	}
-
-	function removeTag(tag: string) {
-		tags = tags.filter((t) => t !== tag);
-	}
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -36,11 +21,8 @@
 		try {
 			const formData = new FormData();
 			formData.append('title', title);
-			formData.append('slug', slug);
-			formData.append('excerpt', excerpt);
 			formData.append('content', content);
 			formData.append('coverImage', coverImage);
-			formData.append('tags', tags.join(','));
 
 			const response = await fetch('/api/create-post', {
 				method: 'POST',
@@ -85,11 +67,6 @@
 						</div>
 
 						<div class="form-group">
-							<label for="excerpt">Excerpt</label>
-							<textarea id="excerpt" bind:value={excerpt} required />
-						</div>
-
-						<div class="form-group">
 							<label for="content">Content</label>
 							<textarea id="content" bind:value={content} required />
 						</div>
@@ -110,27 +87,6 @@
 										"/images/posts/image-name.png")
 									</p>
 								</div>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="tags">Tags</label>
-							<div class="tags-input">
-								<input
-									type="text"
-									id="tags"
-									bind:value={currentTag}
-									on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-								/>
-								<button type="button" on:click={addTag}>Add Tag</button>
-							</div>
-							<div class="tags-list">
-								{#each tags as tag}
-									<span class="tag">
-										{tag}
-										<button type="button" on:click={() => removeTag(tag)}>×</button>
-									</span>
-								{/each}
 							</div>
 						</div>
 
@@ -161,16 +117,9 @@
 										<Image src={coverImage} alt={title || 'Post cover image'} />
 									</div>
 								{/if}
-								<div class="content">
-									{@html content}
-								</div>
-								{#if tags.length > 0}
-									<div class="tags">
-										{#each tags as tag}
-											<span class="tag">{tag}</span>
-										{/each}
-									</div>
-								{/if}
+											<div class="content">
+				{@html content}
+			</div>
 							</article>
 						</div>
 					{/if}

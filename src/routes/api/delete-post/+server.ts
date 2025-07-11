@@ -1,6 +1,5 @@
 import { json } from '@sveltejs/kit';
-import fs from 'fs/promises';
-import path from 'path';
+import { NewsService } from '$lib/services/newsService';
 
 export async function DELETE({ request }) {
 	const { slug } = await request.json();
@@ -10,24 +9,17 @@ export async function DELETE({ request }) {
 	}
 
 	try {
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)', slug);
+		const success = await NewsService.deletePost(slug);
 
-		// Check if directory exists
-		try {
-			await fs.access(postDir);
-		} catch {
-			return json({ error: 'Post not found' }, { status: 404 });
+		if (!success) {
+			return json({ error: 'Failed to delete post' }, { status: 500 });
 		}
 
-		// Delete the post directory and its contents
-		await fs.rm(postDir, { recursive: true, force: true });
-
 		return json({
-			success: true,
-			shouldRefresh: true
+			success: true
 		});
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Error deleting post:', error);
-		return json({ error: 'Failed to delete post' }, { status: 500 });
+		return json({ error: error.message || 'Failed to delete post' }, { status: 500 });
 	}
 }

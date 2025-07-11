@@ -1,75 +1,35 @@
 import { json } from '@sveltejs/kit';
-import fs from 'fs/promises';
-import path from 'path';
+import { NewsService } from '$lib/services/newsService';
+import type { NewsContentModel } from '$lib/utils/types';
 
 export async function POST({ request }) {
 	const formData = await request.formData();
 	const title = formData.get('title');
-	let slug = formData.get('title')?.toString().replace(/ /g, '-');
-	const excerpt = formData.get('excerpt');
 	const content = formData.get('content');
 	const coverImage = formData.get('coverImage');
-	const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
 
-	if (!title || !slug || !excerpt || !content) {
+	if (!title || !content) {
 		return json({ error: 'Missing required fields' }, { status: 400 });
 	}
 
 	try {
-		// Check for existing slugs and generate a unique one if needed
-		const blogDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)');
-		const existingDirs = await fs.readdir(blogDir);
-		let uniqueSlug = slug;
-		let counter = 1;
-
-		while (existingDirs.includes(uniqueSlug)) {
-			uniqueSlug = `${slug}-${counter}`;
-			counter++;
-		}
-		slug = uniqueSlug;
-
-		// Create the post directory
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(blog-article)', slug);
-		await fs.mkdir(postDir, { recursive: true });
-
-		// Format the cover image path if provided
 		let formattedCoverImage = '';
 		if (coverImage) {
-			// If the image path doesn't start with /images/posts/, add it
 			formattedCoverImage = coverImage.toString().startsWith('/images/posts/')
 				? coverImage.toString()
 				: `/images/posts/${coverImage.toString()}`;
 		}
 
-		// Create the markdown file with frontmatter and required script section
-		const markdownContent = `---
-title: ${title}
-slug: ${slug}
-coverImage: ${formattedCoverImage}
-date: ${new Date().toISOString()}
-excerpt: ${excerpt}
-tags:
-${tags.map((tag) => `  - ${tag}`).join('\n')}
----
+		const result = await NewsService.createPost({
+			title: title.toString(),
+			coverImage: formattedCoverImage,
+			html: content.toString(),
+			// excerpt, tags, etc. can be added here if needed
+		} as Omit<NewsContentModel, 'id' | 'postId' | 'date' | 'comments' | 'slug'>);
 
-<script>
-  import Callout from "$lib/components/molecules/Callout.svelte";
-  import CodeBlock from "$lib/components/molecules/CodeBlock.svelte";
-  import Image from "$lib/components/atoms/Image.svelte";
-</script>
-
-${content}`;
-
-		await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
-
-		// Return success with the slug and a flag to trigger refresh
-		return json({
-			success: true,
-			slug,
-			shouldRefresh: true
-		});
-	} catch (error) {
+		return json(result);
+	} catch (error: any) {
 		console.error('Error creating post:', error);
-		return json({ error: 'Failed to create post' }, { status: 500 });
+		return json({ error: error.message || 'Failed to create post' }, { status: 500 });
 	}
 }

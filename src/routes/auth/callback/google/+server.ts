@@ -41,8 +41,21 @@ export const GET: RequestHandler = async (event) => {
         // 2. Check if user exists by email
         let backendUser = allUsers.find((u) => u.email === user.email);
 
-        // Fetch admin status from backend
-        const isAdmin = await AdminService.checkAdminStatusServer(user.email);
+        // Fetch admin email list from backend
+        let adminEmails: string[] = [];
+        try {
+            const adminRes = await fetch("http://localhost:8080/admin/getall");
+            if (adminRes.ok) {
+                const adminData = await adminRes.json();
+                if (Array.isArray(adminData)) {
+                    adminEmails = adminData.map((a: any) => a.email);
+                }
+            }
+        } catch (e) {
+            adminEmails = [];
+        }
+        // Compute admin from adminEmails
+        const admin = adminEmails.includes(user.email);
 
         // Get IP address from request (production ready)
         let ipAddress = '';
@@ -70,7 +83,7 @@ export const GET: RequestHandler = async (event) => {
                 userId: generateUserId(),
                 email: user.email,
                 authProvider: user.provider,
-                isAdmin, // use isAdmin, not admin
+                admin: admin, // Lombok expects 'admin'
                 banned: isBanned,
                 imagePath: user.image || "",
                 userName: user.email.split("@")[0],
@@ -87,29 +100,21 @@ export const GET: RequestHandler = async (event) => {
                 console.error("Failed to create user in backend:", e);
             }
         } else {
-            // Always update isAdmin and banned status on login using the correct route
+            // Always update admin and banned status on login using the correct route
             try {
-                await fetch(`http://localhost:8080/userData/update/userId/${backendUser.userId}/isAdmin/${isAdmin}`, {
-                    method: "PUT"
+                const updatedUser = {
+                    ...backendUser,
+                    admin: admin, // Lombok expects 'admin'
+                    banned: isBanned,
+                    ipAddress
+                };
+                await fetch(`http://localhost:8080/userData/update`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedUser)
                 });
             } catch (e) {
-                console.error("Failed to update isAdmin in backend:", e);
-            }
-
-            try {
-                await fetch(`http://localhost:8080/userData/update/userId/${backendUser.userId}/banned/${isBanned}`, {
-                    method: "PUT"
-                });
-            } catch (e) {
-                console.error("Failed to update banned status in backend:", e);
-            }
-            // Optionally update IP address on login
-            try {
-                await fetch(`http://localhost:8080/userData/update/userId/${backendUser.userId}/ipAddress/${encodeURIComponent(ipAddress)}`, {
-                    method: "PUT"
-                });
-            } catch (e) {
-                console.error("Failed to update IP address in backend:", e);
+                console.error("Failed to update user in backend:", e);
             }
         }
         // --- End User Data Upload Logic ---

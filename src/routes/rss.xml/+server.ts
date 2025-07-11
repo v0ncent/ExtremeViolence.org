@@ -1,13 +1,34 @@
 import { description, siteBaseUrl, title } from '$lib/data/meta';
 import type { BlogPost } from '$lib/utils/types';
 import dateformat from 'dateformat';
-import { filterPosts, importPosts } from '$lib/data/blog-posts/utils';
+import { NewsService } from '$lib/services/newsService';
+import { marked } from 'marked';
 
-export const prerender = true;
+export const prerender = false;
 
 export async function GET() {
-	const allPosts = importPosts(true, '');
-	const filteredPosts = filterPosts(allPosts);
+	// Fetch posts from database
+	const allNewsPosts = await NewsService.getAllPosts();
+
+	// Sort by date (newest first) and add excerpts
+	const filteredPosts = allNewsPosts
+		.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+		.map(post => {
+			// Convert markdown to HTML for RSS content
+			const htmlContent = post.html ? marked.parse(post.html) : '';
+			return {
+				...post,
+				html: htmlContent, // Replace markdown with converted HTML
+				excerpt: post.excerpt !== undefined && post.excerpt !== null ? post.excerpt : 'No excerpt available',
+				keywords: [],
+				hidden: false,
+				updated: post.date,
+				relatedPosts: [],
+				width: 0,
+				height: 0,
+				series: false
+			};
+		});
 
 	const body = xml(filteredPosts);
 	const headers = {
@@ -15,6 +36,17 @@ export async function GET() {
 		'Content-Type': 'application/xml'
 	};
 	return new Response(body, { headers });
+}
+
+// Helper function to generate excerpt from HTML content
+function generateExcerpt(html: string): string {
+	if (!html) return '';
+
+	// Remove HTML tags and get plain text
+	const text = html.replace(/<[^>]*>/g, '');
+
+	// Take first 100 characters and add ellipsis if longer
+	return text.length > 100 ? text.substring(0, 100) + '...' : text;
 }
 
 const xml = (posts: BlogPost[]) => `
@@ -41,8 +73,8 @@ const xml = (posts: BlogPost[]) => `
       <height>32</height>
     </image>
     ${posts
-			.map(
-				(post) => `
+		.map(
+			(post) => `
         <item>
           <guid>${siteBaseUrl}/${post.slug}</guid>
           <title>${post.title}</title>
@@ -62,19 +94,17 @@ const xml = (posts: BlogPost[]) => `
 
             ${post.html}
           ]]></content:encoded>
-          ${
-						post.coverImage
-							? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${siteBaseUrl}/${post.coverImage}"/>`
-							: ''
-					}
-          ${
-						post.coverImage
-							? `<media:content xmlns:media="http://search.yahoo.com/mrss/" medium="image" url="${siteBaseUrl}/${post.coverImage}"/>`
-							: ''
-					}          
+          ${post.coverImage
+					? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${siteBaseUrl}/${post.coverImage}"/>`
+					: ''
+				}
+          ${post.coverImage
+					? `<media:content xmlns:media="http://search.yahoo.com/mrss/" medium="image" url="${siteBaseUrl}/${post.coverImage}"/>`
+					: ''
+				}          
         </item>
       `
-			)
-			.join('')}
+		)
+		.join('')}
   </channel>
 </rss>`;

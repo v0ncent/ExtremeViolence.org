@@ -1,14 +1,12 @@
-import { filteredNewsPosts } from '$lib/data/blog-posts';
+import { NewsService } from '$lib/services/newsService';
+import { error } from '@sveltejs/kit';
 
 export async function load({ params }) {
 	const { slug } = params;
-	const post = filteredNewsPosts.find((post) => post.slug === slug);
+	const post = await NewsService.getPostBySlug(slug);
 
 	if (!post) {
-		return {
-			status: 404,
-			error: 'Post not found'
-		};
+		throw error(404, 'Post not found');
 	}
 
 	return {

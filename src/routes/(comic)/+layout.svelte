@@ -4,15 +4,13 @@
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
-	import Comments from '$lib/components/molecules/Comments.svelte';
-
 	import type { BlogPost } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
 
 	import { onMount } from 'svelte';
 
-	export let data: { post?: BlogPost } = {}; // safer fallback
-	let post: BlogPost | undefined;
+	export let data: { post?: NewsContentModel } = {}; // safer fallback
+	let post: NewsContentModel | undefined;
 	let chapters: string[] = [];
 	let isDeleting = false;
 	let deleteError = '';
@@ -141,9 +139,7 @@
 				<slot />
 			</div>
 
-			{#if post}
-				<Comments postSlug={post.slug} />
-			{/if}
+			<!-- Comments not available for comic posts yet -->
 		</article>
 	</main>
 

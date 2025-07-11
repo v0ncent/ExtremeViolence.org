@@ -8,10 +8,10 @@
 	import Comments from '$lib/components/molecules/Comments.svelte';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { NewsContentModel } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
 
-	export let data: { post: BlogPost };
+	export let data: { post: NewsContentModel };
 	$: ({ post } = data);
 
 	let metaKeywords = keywords;
@@ -85,9 +85,7 @@
 				<slot />
 			</div>
 
-			{#if post}
-				<Comments postSlug={post.slug} />
-			{/if}
+			<!-- Comments not available for gallery posts yet -->
 		</article>
 	</main>
 

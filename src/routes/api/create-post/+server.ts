@@ -23,9 +23,8 @@ export async function POST({ request }) {
 		const result = await NewsService.createPost({
 			title: title.toString(),
 			coverImage: formattedCoverImage,
-			html: content.toString(),
-			// excerpt, tags, etc. can be added here if needed
-		} as Omit<NewsContentModel, 'id' | 'postId' | 'date' | 'comments' | 'slug'>);
+			html: content.toString()
+		});
 
 		return json(result);
 	} catch (error: any) {

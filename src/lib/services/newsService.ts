@@ -1,6 +1,8 @@
 import type {
     NewsContentModel,
+    ContentModelUpdate,
     PostComment,
+    PostCommentRequest,
     UserContentModel,
     UserContentComment
 } from '$lib/utils/types';
@@ -20,6 +22,7 @@ export class NewsService {
                 console.error('API returned non-array data:', posts);
                 return [];
             }
+
             return posts;
         } catch (error) {
             console.error('Error fetching posts:', error);
@@ -32,7 +35,9 @@ export class NewsService {
         try {
             const response = await fetch(`${API_BASE_URL}/news/get/slug/${slug}`);
             if (!response.ok) return null;
-            return await response.json();
+            const post = await response.json();
+
+            return post;
         } catch (error) {
             console.error('Error fetching post by slug:', error);
             return null;
@@ -44,7 +49,9 @@ export class NewsService {
         try {
             const response = await fetch(`${API_BASE_URL}/news/get/postId/${postId}`);
             if (!response.ok) return null;
-            return await response.json();
+            const post = await response.json();
+
+            return post;
         } catch (error) {
             console.error('Error fetching post:', error);
             return null;
@@ -52,31 +59,30 @@ export class NewsService {
     }
 
     // Create a new post
-    static async createPost(postData: Omit<NewsContentModel, 'id' | 'postId' | 'date' | 'comments' | 'slug'>): Promise<{ success: boolean; slug: string; postId: string }> {
+    static async createPost(postData: { title: string; coverImage: string; html: string }): Promise<{ success: boolean; slug: string }> {
         try {
-            const postId = crypto.randomUUID();
             const date = new Date().toISOString();
-            const fullPostData: NewsContentModel = {
-                ...postData,
-                id: postId,
-                slug: postId,
-                postId,
-                date,
-                comments: [],
-                excerpt: '',
-                tags: '',
-                html: postData.html || ''
+            const requestData = {
+                title: postData.title,
+                coverImage: postData.coverImage,
+                html: postData.html,
+                date
             };
             const response = await fetch(`${API_BASE_URL}/news/createEntry`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(fullPostData)
+                body: JSON.stringify(requestData)
             });
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to create post');
             }
-            return { success: true, slug: postId, postId };
+
+            // Get the created post to get the generated slug/id
+            const createdPost = await response.json();
+            const slug = createdPost.slug;
+
+            return { success: true, slug };
         } catch (error) {
             console.error('Error creating post:', error);
             throw error;
@@ -84,14 +90,13 @@ export class NewsService {
     }
 
     // Update a post
-    static async updatePost(slug: string, updates: Partial<NewsContentModel>): Promise<boolean> {
+    static async updatePost(slug: string, updates: Partial<ContentModelUpdate>): Promise<boolean> {
         try {
             const currentPost = await this.getPostBySlug(slug);
             if (!currentPost) throw new Error('Post not found');
-            const updatedPost: NewsContentModel = {
+            const updatedPost: ContentModelUpdate = {
                 ...currentPost,
-                ...updates,
-                postId: currentPost.postId
+                ...updates
             };
             const response = await fetch(`${API_BASE_URL}/news/update`, {
                 method: 'PUT',
@@ -111,7 +116,7 @@ export class NewsService {
         try {
             const post = await this.getPostBySlug(slug);
             if (!post) return false;
-            const response = await fetch(`${API_BASE_URL}/news/delete/postId/${post.postId}`, {
+            const response = await fetch(`${API_BASE_URL}/news/delete/id/${post.id}`, {
                 method: 'DELETE'
             });
             return response.ok;
@@ -124,18 +129,29 @@ export class NewsService {
     // Add a comment to a post
     static async addComment(postId: string, userId: string, text: string): Promise<boolean> {
         try {
-            const commentId = crypto.randomUUID();
             const date = new Date().toISOString();
             const post = await this.getPostById(postId);
             if (!post) throw new Error('Post not found');
-            const newComment: PostComment = { postId, userId, text, date };
-            const updatedComments = [...post.comments, newComment];
+            const newComment: PostCommentRequest = { userId, text, date };
+            const updatedComments: PostCommentRequest[] = [...post.comments.map(c => ({ userId: c.userId, text: c.text, date: c.date })), newComment];
             const postUpdateSuccess = await this.updatePost(post.slug, { comments: updatedComments });
             if (!postUpdateSuccess) throw new Error('Failed to update post with comment');
-            // Also add to user content
+
+            // Get the updated post to get the generated commentId
+            const updatedPost = await this.getPostById(postId);
+            if (!updatedPost) throw new Error('Failed to get updated post');
+
+            // Find the newly added comment to get its generated commentId
+            const newCommentWithId = updatedPost.comments.find(c =>
+                c.userId === userId && c.text === text && c.date === date
+            );
+
+            if (!newCommentWithId) throw new Error('Failed to find newly added comment');
+
+            // Also add to user content with the correct commentId
             const userComment: UserContentComment = {
-                commentId,
-                postId,
+                commentId: newCommentWithId.commentId,
+                postId: post.id,
                 postTitle: post.title,
                 section: 'news',
                 text,
@@ -167,13 +183,13 @@ export class NewsService {
             const post = await this.getPostById(postId);
             if (!post) throw new Error('Post not found');
             const updatedComments = post.comments.map(comment =>
-                comment.postId === postId && comment.date === commentId
+                comment.commentId === commentId
                     ? { ...comment, text: newText }
                     : comment
             );
             const postUpdateSuccess = await this.updatePost(post.slug, { comments: updatedComments });
             if (!postUpdateSuccess) throw new Error('Failed to update post comment');
-            const userContentResponse = await fetch(`${API_BASE_URL}/userContent/get/userId/${post.comments.find(c => c.date === commentId)?.userId}`);
+            const userContentResponse = await fetch(`${API_BASE_URL}/userContent/get/userId/${post.comments.find(c => c.commentId === commentId)?.userId}`);
             if (userContentResponse.ok) {
                 const userContent: UserContentModel = await userContentResponse.json();
                 const updatedUserComments = userContent.comments.map(comment =>
@@ -200,9 +216,9 @@ export class NewsService {
         try {
             const post = await this.getPostById(postId);
             if (!post) throw new Error('Post not found');
-            const commentToDelete = post.comments.find(c => c.date === commentId);
+            const commentToDelete = post.comments.find(c => c.commentId === commentId);
             if (!commentToDelete) throw new Error('Comment not found');
-            const updatedComments = post.comments.filter(comment => comment.date !== commentId);
+            const updatedComments = post.comments.filter(comment => comment.commentId !== commentId);
             const postUpdateSuccess = await this.updatePost(post.slug, { comments: updatedComments });
             if (!postUpdateSuccess) throw new Error('Failed to update post after comment deletion');
             const userContentResponse = await fetch(`${API_BASE_URL}/userContent/get/userId/${commentToDelete.userId}`);

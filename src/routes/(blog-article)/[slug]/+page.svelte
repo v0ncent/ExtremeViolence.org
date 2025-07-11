@@ -7,10 +7,21 @@
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 	import Comments from '$lib/components/molecules/Comments.svelte';
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { NewsContentModel } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
 
-	export let data: { post: BlogPost };
+	export let data: {
+		post: NewsContentModel & {
+			updated?: string;
+			previewHtml?: string;
+			keywords?: string[];
+			hidden?: boolean;
+			relatedPosts?: any[];
+			width?: number;
+			height?: number;
+			series?: boolean;
+		};
+	};
 	$: ({ post } = data);
 
 	let metaKeywords = keywords;
@@ -119,7 +130,7 @@
 			</div>
 
 			{#if post}
-				<Comments postSlug={post.slug} postId={post.postId} />
+				<Comments postSlug={post.slug} postId={post.id} />
 			{/if}
 		</article>
 	</main>

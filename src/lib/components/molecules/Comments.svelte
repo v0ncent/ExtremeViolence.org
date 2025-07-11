@@ -3,10 +3,11 @@
 	import Button from '$lib/components/atoms/Button.svelte';
 	import { onMount } from 'svelte';
 	import { NewsService } from '$lib/services/newsService';
-	import type { PostComment, UserContentComment } from '$lib/utils/types';
+	import { UserService } from '$lib/services/userService';
+	import type { PostComment, UserContentComment, UserDataModel } from '$lib/utils/types';
 
 	export let postSlug: string;
-	export let postId: string;
+	export let postId: string | undefined;
 
 	// Special creator account details
 	const CREATOR_EMAIL = 'vincentlikesrobots@gmail.com';
@@ -17,6 +18,7 @@
 	let newComment = '';
 	let isSubmitting = false;
 	let currentUser: any = null;
+	let commentUsers: Map<string, UserDataModel> = new Map();
 
 	onMount(async () => {
 		const unsubscribe = auth.subscribe(($auth) => {
@@ -33,28 +35,43 @@
 	});
 
 	async function loadComments() {
+		if (!postId) {
+			console.warn('No postId provided, comments not available for this post type');
+			return;
+		}
+
 		try {
 			const post = await NewsService.getPostById(postId);
 			if (post) {
 				comments = post.comments;
+				// Load user information for all comments
+				await loadCommentUsers();
 			}
 		} catch (error) {
 			console.error('Error loading comments:', error);
 		}
 	}
 
+	async function loadCommentUsers() {
+		const userPromises = comments.map(async (comment) => {
+			if (!commentUsers.has(comment.userId)) {
+				const user = await UserService.getUserByIdWithFallback(comment.userId);
+				if (user) {
+					commentUsers.set(comment.userId, user);
+				}
+			}
+		});
+		await Promise.all(userPromises);
+	}
+
 	async function addComment() {
-		if (!newComment.trim() || !currentUser || isSubmitting) return;
+		if (!newComment.trim() || !currentUser || isSubmitting || !postId) return;
 
 		isSubmitting = true;
 
 		try {
-			// Add comment to database
-			const success = await NewsService.addComment(
-				postId,
-				currentUser.userId || currentUser.id,
-				newComment.trim()
-			);
+			// Add comment to database using the canonical user ID (_id)
+			const success = await NewsService.addComment(postId, currentUser._id, newComment.trim());
 
 			if (success) {
 				// Reload comments to get the updated list
@@ -82,121 +99,168 @@
 </script>
 
 <div class="comments-section">
-	<h3>Comments ({comments.length})</h3>
+	{#if postId}
+		<h3>Comments ({comments.length})</h3>
 
-	{#if currentUser}
-		<div class="comment-form">
-			{#if currentUser._id === CREATOR_USER_ID}
-				<div class="user-info creator-user-info" style="position: relative;">
-					<div class="roaring-flame-background">
-						<div class="flame-layer flame-layer-1" />
-						<div class="flame-layer flame-layer-2" />
-						<div class="flame-layer flame-layer-3" />
-						<div class="flame-layer flame-layer-4" />
-					</div>
-					<div class="user-avatar">
-						{#if currentUser.imagePath}
-							<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
-						{:else}
-							<div class="avatar-placeholder">
-								{currentUser.email.charAt(0).toUpperCase()}
-							</div>
-						{/if}
-					</div>
-					<div class="user-details">
-						<span class="username creator-name">
-							{currentUser.userName || currentUser.email.split('@')[0]}
-						</span>
-						{#if currentUser.isAdmin}
-							<span class="admin-badge">Admin</span>
-						{/if}
-					</div>
-				</div>
-			{:else}
-				<div class="user-info">
-					<div class="user-avatar">
-						{#if currentUser.imagePath}
-							<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
-						{:else}
-							<div class="avatar-placeholder">
-								{currentUser.email.charAt(0).toUpperCase()}
-							</div>
-						{/if}
-					</div>
-					<div class="user-details">
-						<span class="username">
-							{currentUser.userName || currentUser.email.split('@')[0]}
-						</span>
-						{#if currentUser.isAdmin}
-							<span class="admin-badge">Admin</span>
-						{/if}
-					</div>
-				</div>
-			{/if}
-			<div class="form-content">
-				<textarea
-					bind:value={newComment}
-					placeholder="Write a comment..."
-					rows="3"
-					maxlength="1000"
-				/>
-				<div class="form-actions">
-					<span class="char-count">{newComment.length}/1000</span>
-					<Button
-						color="primary"
-						size="small"
-						style="solid"
-						on:click={addComment}
-						disabled={!newComment.trim() || isSubmitting}
-					>
-						{isSubmitting ? 'Posting...' : 'Post Comment'}
-					</Button>
-				</div>
-			</div>
-		</div>
-	{:else}
-		<div class="login-prompt">
-			<p>Please <a href="/login">log in</a> to leave a comment.</p>
-		</div>
-	{/if}
-
-	<div class="comments-list">
-		{#if comments.length === 0}
-			<div class="no-comments">
-				<p>No comments yet. Be the first to comment!</p>
-			</div>
-		{:else}
-			{#each comments as comment (comment.date)}
-				{#if comment.userId === CREATOR_USER_ID}
-					<div class="comment creator-comment-author" style="position: relative;">
+		{#if currentUser}
+			<div class="comment-form">
+				{#if currentUser._id === CREATOR_USER_ID}
+					<div class="user-info creator-user-info" style="position: relative;">
 						<div class="roaring-flame-background">
 							<div class="flame-layer flame-layer-1" />
 							<div class="flame-layer flame-layer-2" />
 							<div class="flame-layer flame-layer-3" />
 							<div class="flame-layer flame-layer-4" />
 						</div>
-						<div class="comment-header">
-							<span class="username creator-name">{comment.userId}</span>
-							<span class="comment-date">{formatDate(comment.date)}</span>
+						<div class="user-avatar">
+							{#if currentUser.imagePath}
+								<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
+							{:else}
+								<div class="avatar-placeholder">
+									{currentUser.email.charAt(0).toUpperCase()}
+								</div>
+							{/if}
 						</div>
-						<div class="comment-content">
-							<p>{comment.text}</p>
+						<div class="user-details">
+							<span class="username creator-name">
+								{currentUser.userName || currentUser.email.split('@')[0]}
+							</span>
+							{#if currentUser.isAdmin}
+								<span class="admin-badge">Admin</span>
+							{/if}
 						</div>
 					</div>
 				{:else}
-					<div class="comment">
-						<div class="comment-header">
-							<span class="username">{comment.userId}</span>
-							<span class="comment-date">{formatDate(comment.date)}</span>
+					<div class="user-info">
+						<div class="user-avatar">
+							{#if currentUser.imagePath}
+								<img src={currentUser.imagePath} alt="Profile" class="avatar-image" />
+							{:else}
+								<div class="avatar-placeholder">
+									{currentUser.email.charAt(0).toUpperCase()}
+								</div>
+							{/if}
 						</div>
-						<div class="comment-content">
-							<p>{comment.text}</p>
+						<div class="user-details">
+							<span class="username">
+								{currentUser.userName || currentUser.email.split('@')[0]}
+							</span>
+							{#if currentUser.isAdmin}
+								<span class="admin-badge">Admin</span>
+							{/if}
 						</div>
 					</div>
 				{/if}
-			{/each}
+				<div class="form-content">
+					<textarea
+						bind:value={newComment}
+						placeholder="Write a comment..."
+						rows="3"
+						maxlength="1000"
+					/>
+					<div class="form-actions">
+						<span class="char-count">{newComment.length}/1000</span>
+						<Button
+							color="primary"
+							size="small"
+							style="solid"
+							on:click={addComment}
+							disabled={!newComment.trim() || isSubmitting}
+						>
+							{isSubmitting ? 'Posting...' : 'Post Comment'}
+						</Button>
+					</div>
+				</div>
+			</div>
+		{:else}
+			<div class="login-prompt">
+				<p>Please <a href="/login">log in</a> to leave a comment.</p>
+			</div>
 		{/if}
-	</div>
+
+		<div class="comments-list">
+			{#if comments.length === 0}
+				<div class="no-comments">
+					<p>No comments yet. Be the first to comment!</p>
+				</div>
+			{:else}
+				{#each comments as comment (comment.commentId)}
+					{@const commentUser = commentUsers.get(comment.userId)}
+					{#if comment.userId === CREATOR_USER_ID}
+						<div class="comment creator-comment-author" style="position: relative;">
+							<div class="roaring-flame-background">
+								<div class="flame-layer flame-layer-1" />
+								<div class="flame-layer flame-layer-2" />
+								<div class="flame-layer flame-layer-3" />
+								<div class="flame-layer flame-layer-4" />
+							</div>
+							<div class="comment-header">
+								<div class="comment-author">
+									<div class="author-avatar">
+										{#if commentUser?.imagePath}
+											<img src={commentUser.imagePath} alt="Profile" class="avatar-image" />
+										{:else}
+											<div class="avatar-placeholder">
+												{(commentUser?.userName || commentUser?.email || 'U')
+													.charAt(0)
+													.toUpperCase()}
+											</div>
+										{/if}
+									</div>
+									<div class="author-info">
+										<span class="username creator-name">
+											{commentUser?.userName || commentUser?.email?.split('@')[0] || 'Unknown User'}
+										</span>
+										{#if commentUser?.isAdmin}
+											<span class="admin-badge">Admin</span>
+										{/if}
+										<span class="comment-date">{formatDate(comment.date)}</span>
+									</div>
+								</div>
+							</div>
+							<div class="comment-content">
+								<p>{comment.text}</p>
+							</div>
+						</div>
+					{:else}
+						<div class="comment">
+							<div class="comment-header">
+								<div class="comment-author">
+									<div class="author-avatar">
+										{#if commentUser?.imagePath}
+											<img src={commentUser.imagePath} alt="Profile" class="avatar-image" />
+										{:else}
+											<div class="avatar-placeholder">
+												{(commentUser?.userName || commentUser?.email || 'U')
+													.charAt(0)
+													.toUpperCase()}
+											</div>
+										{/if}
+									</div>
+									<div class="author-info">
+										<span class="username">
+											{commentUser?.userName || commentUser?.email?.split('@')[0] || 'Unknown User'}
+										</span>
+										{#if commentUser?.isAdmin}
+											<span class="admin-badge">Admin</span>
+										{/if}
+										<span class="comment-date">{formatDate(comment.date)}</span>
+									</div>
+								</div>
+							</div>
+							<div class="comment-content">
+								<p>{comment.text}</p>
+							</div>
+						</div>
+					{/if}
+				{/each}
+			{/if}
+		</div>
+	{:else}
+		<div class="no-comments">
+			<p>Comments are not available for this post type.</p>
+		</div>
+	{/if}
 </div>
 
 <style lang="scss">

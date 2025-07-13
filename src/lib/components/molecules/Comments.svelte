@@ -39,6 +39,7 @@
 	let isAddingAdminComment = false;
 	let isForceDeleting = false;
 	let isDeletingAdminComment = false;
+	let copiedUserId: string | null = null;
 
 	onMount(async () => {
 		const unsubscribe = auth.subscribe(($auth) => {
@@ -320,6 +321,32 @@
 			isDeletingAdminComment = false;
 		}
 	}
+
+	async function copyUserId(userId: string) {
+		try {
+			await navigator.clipboard.writeText(userId);
+			copiedUserId = userId;
+
+			// Reset the copied state after 2 seconds
+			setTimeout(() => {
+				copiedUserId = null;
+			}, 2000);
+		} catch (error) {
+			console.error('Failed to copy user ID:', error);
+			// Fallback for older browsers
+			const textArea = document.createElement('textarea');
+			textArea.value = userId;
+			document.body.appendChild(textArea);
+			textArea.select();
+			document.execCommand('copy');
+			document.body.removeChild(textArea);
+
+			copiedUserId = userId;
+			setTimeout(() => {
+				copiedUserId = null;
+			}, 2000);
+		}
+	}
 </script>
 
 <div class="comments-section">
@@ -552,6 +579,15 @@
 													color="secondary"
 													size="small"
 													style="clear"
+													on:click={() => copyUserId(comment.userId)}
+													class="copy-user-id-btn"
+												>
+													{copiedUserId === comment.userId ? 'Copied!' : 'Copy User ID'}
+												</Button>
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
 													on:click={() => adminForceDeleteComment(comment)}
 													disabled={isForceDeleting}
 													class="admin-force-delete-btn"
@@ -722,6 +758,15 @@
 												</Button>
 											{/if}
 											{#if currentUser?.isAdmin}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => copyUserId(comment.userId)}
+													class="copy-user-id-btn"
+												>
+													{copiedUserId === comment.userId ? 'Copied!' : 'Copy User ID'}
+												</Button>
 												<Button
 													color="secondary"
 													size="small"

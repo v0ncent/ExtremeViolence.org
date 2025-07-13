@@ -4,7 +4,12 @@
 	import { onMount } from 'svelte';
 	import { NewsService } from '$lib/services/newsService';
 	import { UserService } from '$lib/services/userService';
-	import type { PostComment, UserContentComment, UserDataModel } from '$lib/utils/types';
+	import type {
+		PostComment,
+		UserContentComment,
+		UserDataModel,
+		PostAdminComment
+	} from '$lib/utils/types';
 
 	export let postSlug: string;
 	export let postId: string | undefined;
@@ -19,6 +24,21 @@
 	let isSubmitting = false;
 	let currentUser: any = null;
 	let commentUsers: Map<string, UserDataModel> = new Map();
+	let usersLoaded = false;
+
+	// Edit comment state
+	let editingCommentId: string | null = null;
+	let editingText = '';
+	let isEditing = false;
+	let isSaving = false;
+	let isDeleting = false;
+
+	// Admin functionality state
+	let addingAdminCommentFor: string | null = null;
+	let adminCommentText = '';
+	let isAddingAdminComment = false;
+	let isForceDeleting = false;
+	let isDeletingAdminComment = false;
 
 	onMount(async () => {
 		const unsubscribe = auth.subscribe(($auth) => {
@@ -62,6 +82,8 @@
 			}
 		});
 		await Promise.all(userPromises);
+		usersLoaded = true;
+		commentUsers = commentUsers; // Trigger reactivity
 	}
 
 	async function addComment() {
@@ -70,7 +92,7 @@
 		isSubmitting = true;
 
 		try {
-			// Add comment to database using the canonical user ID (_id)
+			// Add comment to database using the user's _id (custom UUID)
 			const success = await NewsService.addComment(postId, currentUser._id, newComment.trim());
 
 			if (success) {
@@ -96,11 +118,226 @@
 			minute: '2-digit'
 		}).format(new Date(date));
 	}
+
+	function isAdmin(user: UserDataModel | undefined): boolean {
+		if (!user) return false;
+		return user.isAdmin || (user as any)?.admin || false;
+	}
+
+	function canEditComment(comment: PostComment): boolean {
+		if (!currentUser) return false;
+		return comment.userId === currentUser._id || currentUser.isAdmin;
+	}
+
+	function canDeleteComment(comment: PostComment): boolean {
+		if (!currentUser) return false;
+		return comment.userId === currentUser._id || currentUser.isAdmin;
+	}
+
+	function startEditComment(comment: PostComment) {
+		editingCommentId = comment.commentId;
+		editingText = comment.text;
+		isEditing = true;
+	}
+
+	function cancelEditComment() {
+		editingCommentId = null;
+		editingText = '';
+		isEditing = false;
+		isSaving = false;
+		isDeleting = false;
+	}
+
+	async function saveEditComment() {
+		if (!editingCommentId || !editingText.trim() || !postId || isSaving) return;
+
+		isSaving = true;
+
+		try {
+			const success = await NewsService.updateComment(postId, editingCommentId, editingText.trim());
+
+			if (success) {
+				// Reload comments to get the updated list
+				await loadComments();
+				cancelEditComment();
+			} else {
+				console.error('Failed to update comment');
+			}
+		} catch (error) {
+			console.error('Error updating comment:', error);
+		} finally {
+			isSaving = false;
+		}
+	}
+
+	async function deleteComment(comment: PostComment) {
+		if (!postId || isDeleting) return;
+
+		if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) {
+			return;
+		}
+
+		isDeleting = true;
+
+		try {
+			const success = await NewsService.deleteComment(postId, comment.commentId);
+
+			if (success) {
+				// Reload comments to get the updated list
+				await loadComments();
+			} else {
+				console.error('Failed to delete comment');
+			}
+		} catch (error) {
+			console.error('Error deleting comment:', error);
+		} finally {
+			isDeleting = false;
+		}
+	}
+
+	async function adminForceDeleteComment(comment: PostComment) {
+		if (!postId || isForceDeleting || !currentUser) return;
+
+		if (
+			!confirm(
+				'Are you sure you want to force delete this comment as an admin? This will mark it as deleted and cannot be undone.'
+			)
+		) {
+			return;
+		}
+
+		isForceDeleting = true;
+
+		try {
+			const success = await NewsService.adminForceDeleteComment(
+				postId,
+				comment.commentId,
+				currentUser._id,
+				currentUser.userName || currentUser.email.split('@')[0]
+			);
+
+			if (success) {
+				// Reload comments to get the updated list
+				await loadComments();
+			} else {
+				console.error('Failed to force delete comment');
+			}
+		} catch (error) {
+			console.error('Error force deleting comment:', error);
+		} finally {
+			isForceDeleting = false;
+		}
+	}
+
+	function startAddAdminNote(comment: PostComment) {
+		addingAdminCommentFor = comment.commentId;
+		adminCommentText = '';
+	}
+
+	function cancelAddAdminNote() {
+		addingAdminCommentFor = null;
+		adminCommentText = '';
+		isAddingAdminComment = false;
+	}
+
+	async function saveAdminNote(comment: PostComment) {
+		if (!postId || !adminCommentText.trim() || isAddingAdminComment || !currentUser) return;
+
+		isAddingAdminComment = true;
+
+		try {
+			const success = await NewsService.addAdminComment(
+				postId,
+				comment.commentId,
+				adminCommentText.trim(),
+				currentUser._id,
+				currentUser.userName || currentUser.email.split('@')[0]
+			);
+
+			if (success) {
+				// Reload comments to get the updated list
+				await loadComments();
+				cancelAddAdminNote();
+			} else {
+				console.error('Failed to add admin comment');
+			}
+		} catch (error) {
+			console.error('Error adding admin comment:', error);
+		} finally {
+			isAddingAdminComment = false;
+		}
+	}
+
+	async function viewAdminActivity() {
+		if (!currentUser?.isAdmin) return;
+
+		try {
+			const adminData = await NewsService.getForceDeletedComments();
+			console.log('Admin Activity Data:', adminData);
+
+			// For now, just log to console. You could create a modal or separate page to display this data
+			alert(
+				`Admin Activity:\n\nForce-deleted comments: ${adminData.reduce(
+					(sum, user) => sum + user.comments.length,
+					0
+				)}\nAdmin comments: ${adminData.reduce(
+					(sum, user) => sum + user.adminComments.length,
+					0
+				)}\n\nCheck console for detailed data.`
+			);
+		} catch (error) {
+			console.error('Error fetching admin activity:', error);
+		}
+	}
+
+	async function deleteAdminComment(comment: PostComment, adminComment: PostAdminComment) {
+		if (!postId || isDeletingAdminComment) return;
+
+		if (
+			!confirm('Are you sure you want to delete this admin comment? This action cannot be undone.')
+		) {
+			return;
+		}
+
+		isDeletingAdminComment = true;
+
+		try {
+			const success = await NewsService.deleteAdminComment(
+				postId,
+				comment.commentId,
+				adminComment.commentId
+			);
+
+			if (success) {
+				// Reload comments to get the updated list
+				await loadComments();
+			} else {
+				console.error('Failed to delete admin comment');
+			}
+		} catch (error) {
+			console.error('Error deleting admin comment:', error);
+		} finally {
+			isDeletingAdminComment = false;
+		}
+	}
 </script>
 
 <div class="comments-section">
 	{#if postId}
-		<h3>Comments ({comments.length})</h3>
+		<div class="comments-header">
+			<h3>Comments ({comments.length})</h3>
+			{#if currentUser?.isAdmin}
+				<Button
+					color="secondary"
+					size="small"
+					style="clear"
+					on:click={() => viewAdminActivity()}
+					class="admin-activity-btn"
+				>
+					View Admin Activity
+				</Button>
+			{/if}
+		</div>
 
 		{#if currentUser}
 			<div class="comment-form">
@@ -183,19 +420,23 @@
 				<div class="no-comments">
 					<p>No comments yet. Be the first to comment!</p>
 				</div>
+			{:else if !usersLoaded}
+				<div class="loading-comments">
+					<p>Loading comments...</p>
+				</div>
 			{:else}
 				{#each comments as comment (comment.commentId)}
 					{@const commentUser = commentUsers.get(comment.userId)}
 					{#if comment.userId === CREATOR_USER_ID}
-						<div class="comment creator-comment-author" style="position: relative;">
-							<div class="roaring-flame-background">
-								<div class="flame-layer flame-layer-1" />
-								<div class="flame-layer flame-layer-2" />
-								<div class="flame-layer flame-layer-3" />
-								<div class="flame-layer flame-layer-4" />
-							</div>
+						<div class="comment creator-comment-author">
 							<div class="comment-header">
-								<div class="comment-author">
+								<div class="comment-author creator-author" style="position: relative;">
+									<div class="roaring-flame-background">
+										<div class="flame-layer flame-layer-1" />
+										<div class="flame-layer flame-layer-2" />
+										<div class="flame-layer flame-layer-3" />
+										<div class="flame-layer flame-layer-4" />
+									</div>
 									<div class="author-avatar">
 										{#if commentUser?.imagePath}
 											<img src={commentUser.imagePath} alt="Profile" class="avatar-image" />
@@ -208,18 +449,162 @@
 										{/if}
 									</div>
 									<div class="author-info">
-										<span class="username creator-name">
-											{commentUser?.userName || commentUser?.email?.split('@')[0] || 'Unknown User'}
-										</span>
-										{#if commentUser?.isAdmin}
-											<span class="admin-badge">Admin</span>
-										{/if}
+										<div class="user-meta">
+											<span class="username creator-name">
+												{commentUser?.userName ||
+													commentUser?.email?.split('@')[0] ||
+													'Unknown User'}
+											</span>
+											{#if isAdmin(commentUser)}
+												<span class="admin-badge">Admin</span>
+											{/if}
+										</div>
+										<!-- Debug: {JSON.stringify(commentUser)} -->
 										<span class="comment-date">{formatDate(comment.date)}</span>
 									</div>
 								</div>
 							</div>
 							<div class="comment-content">
-								<p>{comment.text}</p>
+								{#if editingCommentId === comment.commentId}
+									<div class="edit-form">
+										<textarea
+											bind:value={editingText}
+											placeholder="Edit your comment..."
+											rows="3"
+											maxlength="1000"
+										/>
+										<div class="edit-actions">
+											<span class="char-count">{editingText.length}/1000</span>
+											<div class="edit-buttons">
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={cancelEditComment}
+													disabled={isSaving}
+												>
+													Cancel
+												</Button>
+												<Button
+													color="primary"
+													size="small"
+													style="solid"
+													on:click={saveEditComment}
+													disabled={!editingText.trim() || isSaving}
+												>
+													{isSaving ? 'Saving...' : 'Save'}
+												</Button>
+											</div>
+										</div>
+									</div>
+								{:else}
+									<p>{comment.text}</p>
+									{#if comment.adminComments && comment.adminComments.length > 0}
+										{#each comment.adminComments as adminComment}
+											<div class="admin-comment">
+												<div class="admin-comment-content">
+													<strong>Admin Note:</strong>
+													{adminComment.text}
+												</div>
+												{#if currentUser?.isAdmin}
+													<div class="admin-comment-actions">
+														<Button
+															color="secondary"
+															size="small"
+															style="clear"
+															on:click={() => deleteAdminComment(comment, adminComment)}
+															disabled={isDeletingAdminComment}
+															class="admin-comment-delete-btn"
+														>
+															{isDeletingAdminComment ? 'Deleting...' : 'Delete'}
+														</Button>
+													</div>
+												{/if}
+											</div>
+										{/each}
+									{/if}
+
+									{#if canEditComment(comment) || canDeleteComment(comment) || currentUser?.isAdmin}
+										<div class="comment-actions">
+											{#if canEditComment(comment)}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => startEditComment(comment)}
+												>
+													Edit
+												</Button>
+											{/if}
+											{#if canDeleteComment(comment)}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => deleteComment(comment)}
+													disabled={isDeleting}
+												>
+													{isDeleting ? 'Deleting...' : 'Delete'}
+												</Button>
+											{/if}
+											{#if currentUser?.isAdmin}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => adminForceDeleteComment(comment)}
+													disabled={isForceDeleting}
+													class="admin-force-delete-btn"
+												>
+													{isForceDeleting ? 'Force Deleting...' : 'Force Delete'}
+												</Button>
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => startAddAdminNote(comment)}
+													class="admin-note-btn"
+												>
+													Add Note
+												</Button>
+											{/if}
+										</div>
+									{/if}
+
+									{#if addingAdminCommentFor === comment.commentId}
+										<div class="admin-note-form">
+											<textarea
+												bind:value={adminCommentText}
+												placeholder="Enter admin note..."
+												rows="2"
+												maxlength="500"
+											/>
+											<div class="admin-note-actions">
+												<span class="char-count">{adminCommentText.length}/500</span>
+												<div class="admin-note-buttons">
+													<Button
+														color="secondary"
+														size="small"
+														style="clear"
+														on:click={cancelAddAdminNote}
+														disabled={isAddingAdminComment}
+													>
+														Cancel
+													</Button>
+													<Button
+														color="secondary"
+														size="small"
+														style="solid"
+														on:click={() => saveAdminNote(comment)}
+														disabled={!adminCommentText.trim() || isAddingAdminComment}
+													>
+														{isAddingAdminComment ? 'Adding...' : 'Add Note'}
+													</Button>
+												</div>
+											</div>
+										</div>
+									{/if}
+								{/if}
 							</div>
 						</div>
 					{:else}
@@ -238,18 +623,162 @@
 										{/if}
 									</div>
 									<div class="author-info">
-										<span class="username">
-											{commentUser?.userName || commentUser?.email?.split('@')[0] || 'Unknown User'}
-										</span>
-										{#if commentUser?.isAdmin}
-											<span class="admin-badge">Admin</span>
-										{/if}
+										<div class="user-meta">
+											<span class="username">
+												{commentUser?.userName ||
+													commentUser?.email?.split('@')[0] ||
+													'Unknown User'}
+											</span>
+											{#if isAdmin(commentUser)}
+												<span class="admin-badge">Admin</span>
+											{/if}
+										</div>
+										<!-- Debug: {JSON.stringify(commentUser)} -->
 										<span class="comment-date">{formatDate(comment.date)}</span>
 									</div>
 								</div>
 							</div>
 							<div class="comment-content">
-								<p>{comment.text}</p>
+								{#if editingCommentId === comment.commentId}
+									<div class="edit-form">
+										<textarea
+											bind:value={editingText}
+											placeholder="Edit your comment..."
+											rows="3"
+											maxlength="1000"
+										/>
+										<div class="edit-actions">
+											<span class="char-count">{editingText.length}/1000</span>
+											<div class="edit-buttons">
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={cancelEditComment}
+													disabled={isSaving}
+												>
+													Cancel
+												</Button>
+												<Button
+													color="primary"
+													size="small"
+													style="solid"
+													on:click={saveEditComment}
+													disabled={!editingText.trim() || isSaving}
+												>
+													{isSaving ? 'Saving...' : 'Save'}
+												</Button>
+											</div>
+										</div>
+									</div>
+								{:else}
+									<p>{comment.text}</p>
+									{#if comment.adminComments && comment.adminComments.length > 0}
+										{#each comment.adminComments as adminComment}
+											<div class="admin-comment">
+												<div class="admin-comment-content">
+													<strong>Admin Note:</strong>
+													{adminComment.text}
+												</div>
+												{#if currentUser?.isAdmin}
+													<div class="admin-comment-actions">
+														<Button
+															color="secondary"
+															size="small"
+															style="clear"
+															on:click={() => deleteAdminComment(comment, adminComment)}
+															disabled={isDeletingAdminComment}
+															class="admin-comment-delete-btn"
+														>
+															{isDeletingAdminComment ? 'Deleting...' : 'Delete'}
+														</Button>
+													</div>
+												{/if}
+											</div>
+										{/each}
+									{/if}
+
+									{#if canEditComment(comment) || canDeleteComment(comment) || currentUser?.isAdmin}
+										<div class="comment-actions">
+											{#if canEditComment(comment)}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => startEditComment(comment)}
+												>
+													Edit
+												</Button>
+											{/if}
+											{#if canDeleteComment(comment)}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => deleteComment(comment)}
+													disabled={isDeleting}
+												>
+													{isDeleting ? 'Deleting...' : 'Delete'}
+												</Button>
+											{/if}
+											{#if currentUser?.isAdmin}
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => adminForceDeleteComment(comment)}
+													disabled={isForceDeleting}
+													class="admin-force-delete-btn"
+												>
+													{isForceDeleting ? 'Force Deleting...' : 'Force Delete'}
+												</Button>
+												<Button
+													color="secondary"
+													size="small"
+													style="clear"
+													on:click={() => startAddAdminNote(comment)}
+													class="admin-note-btn"
+												>
+													Add Note
+												</Button>
+											{/if}
+										</div>
+									{/if}
+
+									{#if addingAdminCommentFor === comment.commentId}
+										<div class="admin-note-form">
+											<textarea
+												bind:value={adminCommentText}
+												placeholder="Enter admin note..."
+												rows="2"
+												maxlength="500"
+											/>
+											<div class="admin-note-actions">
+												<span class="char-count">{adminCommentText.length}/500</span>
+												<div class="admin-note-buttons">
+													<Button
+														color="secondary"
+														size="small"
+														style="clear"
+														on:click={cancelAddAdminNote}
+														disabled={isAddingAdminComment}
+													>
+														Cancel
+													</Button>
+													<Button
+														color="secondary"
+														size="small"
+														style="solid"
+														on:click={() => saveAdminNote(comment)}
+														disabled={!adminCommentText.trim() || isAddingAdminComment}
+													>
+														{isAddingAdminComment ? 'Adding...' : 'Add Note'}
+													</Button>
+												</div>
+											</div>
+										</div>
+									{/if}
+								{/if}
 							</div>
 						</div>
 					{/if}
@@ -270,12 +799,24 @@
 		margin-top: 3rem;
 		padding-top: 2rem;
 		border-top: 1px solid var(--color--border);
+		width: 50vw; /* Use viewport width to span to center */
+		max-width: 50vw;
+		margin-left: 10rem; /* Offset from left edge */
+		margin-right: auto;
+		grid-column: 1 / -1; /* Break out of the grid constraint */
 
-		h3 {
-			margin: 0 0 1.5rem 0;
-			color: var(--color--text);
-			font-size: 1.25rem;
-			font-weight: 600;
+		.comments-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 1.5rem;
+
+			h3 {
+				margin: 0;
+				color: var(--color--text);
+				font-size: 1.25rem;
+				font-weight: 600;
+			}
 		}
 	}
 
@@ -283,8 +824,8 @@
 		background: var(--color--card-background);
 		border: 1px solid var(--color--border);
 		border-radius: 8px;
-		padding: 1.5rem;
-		margin-bottom: 2rem;
+		padding: 1.25rem;
+		margin-bottom: 1rem;
 
 		.user-info {
 			display: flex;
@@ -396,7 +937,8 @@
 	}
 
 	.comments-list {
-		.no-comments {
+		.no-comments,
+		.loading-comments {
 			text-align: center;
 			padding: 2rem;
 			color: var(--color--text-muted);
@@ -408,7 +950,7 @@
 		background: var(--color--card-background);
 		border: 1px solid var(--color--border);
 		border-radius: 8px;
-		padding: 1.5rem;
+		padding: 1rem;
 		margin-bottom: 1rem;
 
 		&:last-child {
@@ -416,7 +958,7 @@
 		}
 
 		.comment-header {
-			margin-bottom: 1rem;
+			margin-bottom: 0.75rem;
 
 			.comment-author {
 				display: flex;
@@ -425,15 +967,15 @@
 
 				.author-avatar {
 					.avatar-image {
-						width: 52px;
-						height: 52px;
+						width: 65px;
+						height: 65px;
 						border-radius: 50%;
 						object-fit: cover;
 					}
 
 					.avatar-placeholder {
-						width: 52px;
-						height: 52px;
+						width: 65px;
+						height: 65px;
 						border-radius: 50%;
 						background: var(--color--primary);
 						color: white;
@@ -441,32 +983,43 @@
 						align-items: center;
 						justify-content: center;
 						font-weight: 600;
-						font-size: 1.2rem;
+						font-size: 1.5rem;
 					}
 				}
 
 				.author-info {
 					display: flex;
 					align-items: center;
+					justify-content: space-between;
 					gap: 0.5rem;
-					flex-wrap: wrap;
 
-					.author-name {
-						font-weight: 500;
-						color: var(--color--text);
-					}
+					.user-meta {
+						display: flex;
+						align-items: center;
+						gap: 0.5rem;
+						flex-wrap: wrap;
 
-					.admin-badge {
-						background: #e67e22;
-						color: #fff;
-						padding: 0.15em 0.6em;
-						border-radius: 1em;
-						font-size: 0.75em;
+						.username {
+							font-weight: 500;
+							color: var(--color--text);
+						}
+
+						.admin-badge {
+							background: #e67e22;
+							color: #fff;
+							padding: 0.2em 0.7em;
+							border-radius: 1em;
+							font-size: 0.75em;
+							font-weight: 600;
+							white-space: nowrap;
+							box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+						}
 					}
 
 					.comment-date {
 						font-size: 0.8rem;
 						color: var(--color--text-muted);
+						white-space: nowrap;
 					}
 				}
 			}
@@ -484,22 +1037,22 @@
 
 	// Creator roaring flame background effects
 	.creator-user-info,
-	.creator-comment-author {
+	.creator-author {
 		position: relative;
 		z-index: 1;
 	}
 
 	.roaring-flame-background {
 		position: absolute;
-		top: -10px;
-		left: -10px;
-		right: -10px;
-		bottom: -10px;
+		top: -5px;
+		left: -5px;
+		right: -5px;
+		bottom: -5px;
 		pointer-events: none;
 		z-index: -1;
 		overflow: hidden;
-		border-radius: 8px;
-		max-width: 200px;
+		border-radius: 12px;
+		max-width: 300px;
 	}
 
 	.flame-layer {
@@ -739,6 +1292,165 @@
 					}
 				}
 			}
+		}
+	}
+
+	// Edit comment styles
+	.edit-form {
+		margin-top: 0.5rem;
+
+		textarea {
+			width: 100%;
+			padding: 0.75rem;
+			border: 1px solid var(--color--border);
+			border-radius: 6px;
+			background: var(--color--background);
+			color: var(--color--text);
+			font-family: inherit;
+			font-size: 0.9rem;
+			resize: vertical;
+			min-height: 80px;
+
+			&:focus {
+				outline: none;
+				border-color: var(--color--primary);
+			}
+
+			&::placeholder {
+				color: var(--color--text-muted);
+			}
+		}
+
+		.edit-actions {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-top: 0.75rem;
+
+			.char-count {
+				font-size: 0.8rem;
+				color: var(--color--text-muted);
+			}
+
+			.edit-buttons {
+				display: flex;
+				gap: 0.5rem;
+			}
+		}
+	}
+
+	.comment-actions {
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--color--border);
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.5rem;
+	}
+
+	.admin-comment {
+		margin-top: 0.5rem;
+		padding: 0.5rem 0.75rem;
+		background-color: #e3f2fd; /* Light blue background for admin comments */
+		border: 1px solid #bbdefb; /* Blue border for admin comments */
+		border-radius: 6px;
+		font-size: 0.85rem;
+		color: #1976d2; /* Darker blue text for admin comments */
+		font-style: italic;
+	}
+
+	.admin-comment-content {
+		margin-bottom: 0.25rem;
+	}
+
+	.admin-comment-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 0.5rem;
+	}
+
+	.admin-comment-delete-btn {
+		color: #dc3545 !important; /* Red color for force delete */
+		border-color: #dc3545 !important;
+
+		&:hover {
+			background-color: rgba(220, 53, 69, 0.1) !important;
+		}
+	}
+
+	.admin-note-form {
+		margin-top: 0.75rem;
+		padding: 0.75rem;
+		background: var(--color--card-background);
+		border: 1px solid var(--color--border);
+		border-radius: 8px;
+
+		textarea {
+			width: 100%;
+			padding: 0.75rem;
+			border: 1px solid var(--color--border);
+			border-radius: 6px;
+			background: var(--color--background);
+			color: var(--color--text);
+			font-family: inherit;
+			font-size: 0.9rem;
+			resize: vertical;
+			min-height: 80px;
+			margin-bottom: 0.5rem;
+
+			&:focus {
+				outline: none;
+				border-color: var(--color--primary);
+			}
+
+			&::placeholder {
+				color: var(--color--text-muted);
+			}
+		}
+
+		.admin-note-actions {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-top: 0.75rem;
+
+			.char-count {
+				font-size: 0.8rem;
+				color: var(--color--text-muted);
+			}
+
+			.admin-note-buttons {
+				display: flex;
+				gap: 0.5rem;
+			}
+		}
+	}
+
+	// Custom styling for admin buttons
+	.admin-force-delete-btn {
+		color: #dc3545 !important; /* Red color for force delete */
+		border-color: #dc3545 !important;
+
+		&:hover {
+			background-color: rgba(220, 53, 69, 0.1) !important;
+		}
+	}
+
+	.admin-note-btn {
+		color: #fd7e14 !important; /* Orange color for admin notes */
+		border-color: #fd7e14 !important;
+
+		&:hover {
+			background-color: rgba(253, 126, 20, 0.1) !important;
+		}
+	}
+
+	.admin-activity-btn {
+		color: #6f42c1 !important; /* Purple color for admin activity */
+		border-color: #6f42c1 !important;
+
+		&:hover {
+			background-color: rgba(111, 66, 193, 0.1) !important;
 		}
 	}
 </style>

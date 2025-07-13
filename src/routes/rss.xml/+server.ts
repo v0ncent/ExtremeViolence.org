@@ -78,8 +78,8 @@ const xml = (posts: NewsContentModel[]) => `
       <height>32</height>
     </image>
     ${posts
-		.map(
-			(post) => `
+			.map(
+				(post) => `
         <item>
           <guid>${siteBaseUrl}/${post.slug}</guid>
           <title>${post.title}</title>
@@ -99,17 +99,19 @@ const xml = (posts: NewsContentModel[]) => `
 
             ${post.html}
           ]]></content:encoded>
-          ${post.coverImage
-					? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${siteBaseUrl}/${post.coverImage}"/>`
-					: ''
-				}
-          ${post.coverImage
-					? `<media:content xmlns:media="http://search.yahoo.com/mrss/" medium="image" url="${siteBaseUrl}/${post.coverImage}"/>`
-					: ''
-				}          
+          ${
+						post.coverImage
+							? `<media:thumbnail xmlns:media="http://search.yahoo.com/mrss/" url="${siteBaseUrl}/${post.coverImage}"/>`
+							: ''
+					}
+          ${
+						post.coverImage
+							? `<media:content xmlns:media="http://search.yahoo.com/mrss/" medium="image" url="${siteBaseUrl}/${post.coverImage}"/>`
+							: ''
+					}          
         </item>
       `
-		)
-		.join('')}
+			)
+			.join('')}
   </channel>
 </rss>`;

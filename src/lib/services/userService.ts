@@ -1,4 +1,4 @@
-import type { UserDataModel } from '$lib/utils/types';
+import type { UserDataModel, UserContentModel } from '$lib/utils/types';
 
 const API_BASE_URL = 'http://localhost:8080';
 
@@ -45,5 +45,25 @@ export class UserService {
 	static async getUserByIdWithFallback(userId: string): Promise<UserDataModel | null> {
 		// getUserById now includes fallback logic and handles both userId and id fields
 		return await this.getUserById(userId);
+	}
+
+	// Get user content including comments and admin comments
+	static async getUserContent(userId: string): Promise<UserContentModel | null> {
+		try {
+			const response = await fetch(`${API_BASE_URL}/userContent/get/userId/${userId}`);
+			if (!response.ok) {
+				// If user has no content yet, return empty content model
+				return {
+					id: userId,
+					userId,
+					comments: [],
+					adminComments: []
+				};
+			}
+			return await response.json();
+		} catch (error) {
+			console.error('Error fetching user content:', error);
+			return null;
+		}
 	}
 }

@@ -26,6 +26,9 @@
 	let sortOrder: 'asc' | 'desc' = 'asc';
 	let banningUserId: string | null = null;
 	let adminEmails: string[] = [];
+	let selectedUserForContent: UserData | null = null;
+	let userContent: any = null;
+	let loadingContent = false;
 
 	// Filtered and sorted users
 	$: filteredUsers = users
@@ -176,6 +179,52 @@
 		return sortOrder === 'asc' ? '↑' : '↓';
 	}
 
+	async function viewUserContent(user: UserData) {
+		selectedUserForContent = user;
+		loadingContent = true;
+		userContent = null;
+
+		try {
+			const response = await fetch(`http://localhost:8080/userContent/get/userId/${user.userId}`);
+			if (response.ok) {
+				userContent = await response.json();
+			} else {
+				// If user has no content, create empty structure
+				userContent = {
+					id: user.userId,
+					userId: user.userId,
+					comments: [],
+					adminComments: []
+				};
+			}
+		} catch (error) {
+			console.error('Error fetching user content:', error);
+			userContent = {
+				id: user.userId,
+				userId: user.userId,
+				comments: [],
+				adminComments: []
+			};
+		} finally {
+			loadingContent = false;
+		}
+	}
+
+	function closeUserContent() {
+		selectedUserForContent = null;
+		userContent = null;
+	}
+
+	function formatDate(date: string): string {
+		return new Intl.DateTimeFormat('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		}).format(new Date(date));
+	}
+
 	onMount(() => {
 		const unsubscribe = auth.subscribe(($auth) => {
 			if ($auth.initialized && !$auth.loading) {
@@ -266,7 +315,7 @@
 										</th>
 										<th>User ID</th>
 										<th>Profile Image</th>
-										<th>Ban</th>
+										<th>Actions</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -317,24 +366,32 @@
 													</div>
 												{/if}
 											</td>
-											<td class="ban-cell">
-												{#if !user.banned}
+											<td class="actions-cell">
+												<div class="action-buttons">
 													<button
-														class="ban-button"
-														disabled={banningUserId === user.userId}
-														on:click={() => banUser(user)}
+														class="view-content-button"
+														on:click={() => viewUserContent(user)}
 													>
-														{banningUserId === user.userId ? 'Banning...' : 'Ban'}
+														View Content
 													</button>
-												{:else}
-													<button
-														class="unban-button"
-														disabled={banningUserId === user.userId}
-														on:click={() => unbanUser(user)}
-													>
-														{banningUserId === user.userId ? 'Unbanning...' : 'Unban'}
-													</button>
-												{/if}
+													{#if !user.banned}
+														<button
+															class="ban-button"
+															disabled={banningUserId === user.userId}
+															on:click={() => banUser(user)}
+														>
+															{banningUserId === user.userId ? 'Banning...' : 'Ban'}
+														</button>
+													{:else}
+														<button
+															class="unban-button"
+															disabled={banningUserId === user.userId}
+															on:click={() => unbanUser(user)}
+														>
+															{banningUserId === user.userId ? 'Unbanning...' : 'Unban'}
+														</button>
+													{/if}
+												</div>
 											</td>
 										</tr>
 									{/each}
@@ -346,6 +403,119 @@
 			</div>
 		</article>
 	</main>
+
+	<!-- User Content Modal -->
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	{#if selectedUserForContent}
+		<div
+			class="modal-overlay"
+			on:click={closeUserContent}
+			on:keydown={(e) => e.key === 'Escape' && closeUserContent()}
+		>
+			<div class="modal-content" on:click|stopPropagation>
+				<div class="modal-header">
+					<h2>User Content: {selectedUserForContent.userName || selectedUserForContent.email}</h2>
+					<button class="close-button" on:click={closeUserContent}>×</button>
+				</div>
+
+				<div class="modal-body">
+					{#if loadingContent}
+						<div class="loading-content">
+							<p>Loading user content...</p>
+						</div>
+					{:else if userContent}
+						<div class="content-sections">
+							<!-- Comments Section -->
+							<div class="content-section">
+								<h3>Comments ({userContent.comments?.length || 0})</h3>
+								{#if userContent.comments && userContent.comments.length > 0}
+									<div class="comments-list">
+										{#each userContent.comments as comment (comment.commentId)}
+											<div class="comment-item {comment.deletedByAdmin ? 'deleted-by-admin' : ''}">
+												<div class="comment-header">
+													<div class="comment-meta">
+														<span class="section-badge {comment.section}">{comment.section}</span>
+														<span class="post-title">{comment.postTitle}</span>
+														<span class="comment-date">{formatDate(comment.date)}</span>
+														{#if comment.deletedByAdmin}
+															<span class="deleted-badge">FORCE DELETED</span>
+														{/if}
+													</div>
+													<div class="comment-id">
+														<code>Comment ID: {comment.commentId}</code>
+														<code>Post ID: {comment.postId}</code>
+													</div>
+												</div>
+												<div class="comment-text">
+													<p>{comment.text}</p>
+												</div>
+											</div>
+										{/each}
+									</div>
+								{:else}
+									<p class="no-content">No comments found.</p>
+								{/if}
+							</div>
+
+							<!-- Admin Comments Section (only for admins) -->
+							{#if selectedUserForContent.isAdmin && userContent.adminComments && userContent.adminComments.length > 0}
+								<div class="content-section">
+									<h3>Admin Notes ({userContent.adminComments.length})</h3>
+									<div class="admin-comments-list">
+										{#each userContent.adminComments as adminComment (adminComment.commentId)}
+											<div class="admin-comment-item">
+												<div class="admin-comment-header">
+													<div class="admin-comment-meta">
+														<span class="section-badge {adminComment.section}"
+															>{adminComment.section}</span
+														>
+														<span class="post-title">{adminComment.postTitle}</span>
+														<span class="admin-comment-date">{formatDate(adminComment.date)}</span>
+													</div>
+													<div class="admin-comment-id">
+														<code>Admin Comment ID: {adminComment.commentId}</code>
+														<code>Post ID: {adminComment.postId}</code>
+													</div>
+												</div>
+												<div class="admin-comment-text">
+													<p><strong>Admin Note:</strong> {adminComment.text}</p>
+													<p class="on-comment">On comment: {adminComment.onComment}</p>
+												</div>
+											</div>
+										{/each}
+									</div>
+								</div>
+							{/if}
+
+							<!-- Summary Stats -->
+							<div class="content-summary">
+								<div class="summary-item">
+									<span class="summary-label">Total Comments:</span>
+									<span class="summary-value">{userContent.comments?.length || 0}</span>
+								</div>
+								<div class="summary-item">
+									<span class="summary-label">Force Deleted:</span>
+									<span class="summary-value deleted-count">
+										{userContent.comments?.filter((c) => c.deletedByAdmin).length || 0}
+									</span>
+								</div>
+								{#if selectedUserForContent.isAdmin}
+									<div class="summary-item">
+										<span class="summary-label">Admin Notes:</span>
+										<span class="summary-value">{userContent.adminComments?.length || 0}</span>
+									</div>
+								{/if}
+							</div>
+						</div>
+					{:else}
+						<div class="error-content">
+							<p>Failed to load user content.</p>
+						</div>
+					{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	<Footer />
 </div>
@@ -640,7 +810,28 @@
 		}
 	}
 
-	.ban-cell {
+	.actions-cell {
+		.action-buttons {
+			display: flex;
+			gap: 0.5rem;
+			flex-wrap: wrap;
+		}
+
+		.view-content-button {
+			background: #3b82f6;
+			color: white;
+			border: none;
+			border-radius: 6px;
+			padding: 0.5rem 1rem;
+			font-size: 0.9rem;
+			font-weight: 500;
+			cursor: pointer;
+			transition: background 0.2s;
+			&:hover {
+				background: #2563eb;
+			}
+		}
+
 		.ban-button {
 			background: #dc2626;
 			color: white;
@@ -715,6 +906,280 @@
 
 		.userid {
 			font-size: 0.7rem;
+		}
+	}
+
+	// Modal Styles
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 1rem;
+	}
+
+	.modal-content {
+		background: var(--color--card-background);
+		border-radius: 12px;
+		max-width: 800px;
+		width: 100%;
+		max-height: 90vh;
+		overflow: hidden;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	}
+
+	.modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.5rem;
+		border-bottom: 1px solid var(--color--border);
+
+		h2 {
+			margin: 0;
+			color: var(--color--text);
+			font-size: 1.25rem;
+		}
+
+		.close-button {
+			background: none;
+			border: none;
+			font-size: 1.5rem;
+			cursor: pointer;
+			color: var(--color--text-muted);
+			padding: 0.5rem;
+			border-radius: 4px;
+			transition: background 0.2s;
+
+			&:hover {
+				background: var(--color--background);
+			}
+		}
+	}
+
+	.modal-body {
+		padding: 1.5rem;
+		max-height: calc(90vh - 80px);
+		overflow-y: auto;
+	}
+
+	.loading-content,
+	.error-content,
+	.no-content {
+		text-align: center;
+		padding: 2rem;
+		color: var(--color--text-muted);
+	}
+
+	.content-sections {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+	}
+
+	.content-section {
+		h3 {
+			margin: 0 0 1rem 0;
+			color: var(--color--text);
+			font-size: 1.1rem;
+			border-bottom: 2px solid var(--color--border);
+			padding-bottom: 0.5rem;
+		}
+	}
+
+	.comments-list,
+	.admin-comments-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.comment-item,
+	.admin-comment-item {
+		background: #ffffff;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		padding: 1rem;
+		transition: border-color 0.2s;
+
+		&.deleted-by-admin {
+			border-color: #dc2626;
+			background: #fef2f2;
+		}
+
+		&:hover {
+			border-color: #3b82f6;
+		}
+	}
+
+	.comment-header,
+	.admin-comment-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: 0.75rem;
+		gap: 1rem;
+	}
+
+	.comment-meta,
+	.admin-comment-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+		flex: 1;
+	}
+
+	.section-badge {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		border-radius: 12px;
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		background: var(--color--primary);
+		color: white;
+
+		&.news {
+			background: #3b82f6;
+		}
+
+		&.comics {
+			background: #8b5cf6;
+		}
+
+		&.gallery {
+			background: #10b981;
+		}
+	}
+
+	.post-title {
+		font-weight: 500;
+		color: #333;
+		font-size: 0.9rem;
+	}
+
+	.comment-date,
+	.admin-comment-date {
+		font-size: 0.8rem;
+		color: #666;
+	}
+
+	.deleted-badge {
+		background: #dc2626;
+		color: white;
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+	}
+
+	.comment-id,
+	.admin-comment-id {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+
+		code {
+			font-family: 'Courier New', monospace;
+			font-size: 0.7rem;
+			color: #333;
+			background: #f5f5f5;
+			padding: 0.2rem 0.4rem;
+			border-radius: 3px;
+			border: 1px solid #ddd;
+			white-space: nowrap;
+		}
+	}
+
+	.comment-text,
+	.admin-comment-text {
+		p {
+			margin: 0;
+			line-height: 1.5;
+			color: #333;
+			white-space: pre-wrap;
+		}
+
+		.on-comment {
+			font-size: 0.8rem;
+			color: #666;
+			margin-top: 0.5rem;
+			font-style: italic;
+		}
+	}
+
+	.content-summary {
+		background: #ffffff;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		padding: 1rem;
+		margin-top: 1rem;
+
+		.summary-item {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 0.5rem 0;
+			border-bottom: 1px solid #ddd;
+
+			&:last-child {
+				border-bottom: none;
+			}
+
+			.summary-label {
+				font-weight: 500;
+				color: #333;
+			}
+
+			.summary-value {
+				font-weight: 600;
+				color: var(--color--primary);
+
+				&.deleted-count {
+					color: #dc2626;
+				}
+			}
+		}
+	}
+
+	@media (max-width: 768px) {
+		.modal-content {
+			max-width: 95vw;
+			max-height: 95vh;
+		}
+
+		.modal-header {
+			padding: 1rem;
+
+			h2 {
+				font-size: 1.1rem;
+			}
+		}
+
+		.modal-body {
+			padding: 1rem;
+		}
+
+		.comment-header,
+		.admin-comment-header {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.5rem;
+		}
+
+		.comment-meta,
+		.admin-comment-meta {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.25rem;
 		}
 	}
 </style>

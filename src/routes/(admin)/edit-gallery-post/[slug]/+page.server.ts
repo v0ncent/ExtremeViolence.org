@@ -1,8 +1,8 @@
-import { filteredGalleryPosts } from '$lib/data/blog-posts';
+import { GalleryService } from '$lib/services/galleryService';
 
 export async function load({ params }) {
 	const { slug } = params;
-	const post = filteredGalleryPosts.find((post) => post.slug === slug);
+	const post = await GalleryService.getPostBySlug(slug);
 
 	if (!post) {
 		return {

@@ -23,7 +23,7 @@
 </script>
 
 <Card
-	href="/{slug}"
+	href="/news/{slug}"
 	target="_self"
 	withBorder={!small}
 	textAlign={small ? 'center' : 'left'}

@@ -1,26 +1,30 @@
 import { json } from '@sveltejs/kit';
-import fs from 'fs/promises';
-import path from 'path';
+import type { RequestHandler } from './$types';
 
-export async function DELETE({ request }) {
-	const { slug } = await request.json();
-
-	if (!slug) {
-		return json({ error: 'Missing slug parameter' }, { status: 400 });
-	}
-
+export const DELETE: RequestHandler = async ({ request }) => {
 	try {
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(gallery)', slug);
+		const { slug } = await request.json();
 
-		// Check if directory exists
-		try {
-			await fs.access(postDir);
-		} catch {
+		if (!slug) {
+			return json({ error: 'Missing slug parameter' }, { status: 400 });
+		}
+
+		// First get the post to get its ID
+		const getResponse = await fetch(`http://localhost:8080/gallery/get/slug/${slug}`);
+		if (!getResponse.ok) {
 			return json({ error: 'Gallery post not found' }, { status: 404 });
 		}
 
-		// Delete the post directory and its contents
-		await fs.rm(postDir, { recursive: true, force: true });
+		const post = await getResponse.json();
+
+		// Delete the post using its ID
+		const deleteResponse = await fetch(`http://localhost:8080/gallery/delete/id/${post.id}`, {
+			method: 'DELETE'
+		});
+
+		if (!deleteResponse.ok) {
+			return json({ error: 'Failed to delete gallery post' }, { status: 500 });
+		}
 
 		return json({
 			success: true,
@@ -30,4 +34,4 @@ export async function DELETE({ request }) {
 		console.error('Error deleting gallery post:', error);
 		return json({ error: 'Failed to delete gallery post' }, { status: 500 });
 	}
-}
+};

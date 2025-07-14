@@ -3,6 +3,7 @@
 	import Button from '$lib/components/atoms/Button.svelte';
 	import { onMount } from 'svelte';
 	import { NewsService } from '$lib/services/newsService';
+	import { GalleryService } from '$lib/services/galleryService';
 	import { UserService } from '$lib/services/userService';
 	import type {
 		PostComment,
@@ -13,10 +14,14 @@
 
 	export let postSlug: string;
 	export let postId: string | undefined;
+	export let service: 'news' | 'gallery' = 'news';
 
 	// Special creator account details
 	const CREATOR_EMAIL = 'vincentlikesrobots@gmail.com';
 	const CREATOR_USER_ID = 'b1f16a98-7540-4ab8-9201-bca6a44e0b19';
+
+	// Get the appropriate service based on the service prop
+	$: serviceInstance = service === 'gallery' ? GalleryService : NewsService;
 
 	// Remove local Comment interface and use backend types for mapping
 	let comments: PostComment[] = [];
@@ -62,7 +67,7 @@
 		}
 
 		try {
-			const post = await NewsService.getPostById(postId);
+			const post = await serviceInstance.getPostById(postId);
 			if (post) {
 				comments = post.comments;
 				// Load user information for all comments
@@ -94,7 +99,7 @@
 
 		try {
 			// Add comment to database using the user's _id (custom UUID)
-			const success = await NewsService.addComment(postId, currentUser._id, newComment.trim());
+			const success = await serviceInstance.addComment(postId, currentUser._id, newComment.trim());
 
 			if (success) {
 				// Reload comments to get the updated list
@@ -155,7 +160,11 @@
 		isSaving = true;
 
 		try {
-			const success = await NewsService.updateComment(postId, editingCommentId, editingText.trim());
+			const success = await serviceInstance.updateComment(
+				postId,
+				editingCommentId,
+				editingText.trim()
+			);
 
 			if (success) {
 				// Reload comments to get the updated list
@@ -181,7 +190,7 @@
 		isDeleting = true;
 
 		try {
-			const success = await NewsService.deleteComment(postId, comment.commentId);
+			const success = await serviceInstance.deleteComment(postId, comment.commentId);
 
 			if (success) {
 				// Reload comments to get the updated list
@@ -210,7 +219,7 @@
 		isForceDeleting = true;
 
 		try {
-			const success = await NewsService.adminForceDeleteComment(
+			const success = await serviceInstance.adminForceDeleteComment(
 				postId,
 				comment.commentId,
 				currentUser._id,
@@ -247,7 +256,7 @@
 		isAddingAdminComment = true;
 
 		try {
-			const success = await NewsService.addAdminComment(
+			const success = await serviceInstance.addAdminComment(
 				postId,
 				comment.commentId,
 				adminCommentText.trim(),
@@ -270,24 +279,18 @@
 	}
 
 	async function viewAdminActivity() {
-		if (!currentUser?.isAdmin) return;
+		if (!currentUser?.isAdmin || !postId) return;
 
 		try {
-			const adminData = await NewsService.getForceDeletedComments();
-			console.log('Admin Activity Data:', adminData);
+			const adminData = await serviceInstance.getPostAdminActivity(postId);
+			console.log('Post Admin Activity Data:', adminData);
 
-			// For now, just log to console. You could create a modal or separate page to display this data
+			// Display post-specific admin activity
 			alert(
-				`Admin Activity:\n\nForce-deleted comments: ${adminData.reduce(
-					(sum, user) => sum + user.comments.length,
-					0
-				)}\nAdmin comments: ${adminData.reduce(
-					(sum, user) => sum + user.adminComments.length,
-					0
-				)}\n\nCheck console for detailed data.`
+				`Admin Activity for this post:\n\nForce-deleted comments: ${adminData.forceDeletedComments.length}\nAdmin comments: ${adminData.adminComments.length}\n\nCheck console for detailed data.`
 			);
 		} catch (error) {
-			console.error('Error fetching admin activity:', error);
+			console.error('Error fetching post admin activity:', error);
 		}
 	}
 
@@ -303,7 +306,7 @@
 		isDeletingAdminComment = true;
 
 		try {
-			const success = await NewsService.deleteAdminComment(
+			const success = await serviceInstance.deleteAdminComment(
 				postId,
 				comment.commentId,
 				adminComment.commentId
@@ -361,7 +364,7 @@
 					on:click={() => viewAdminActivity()}
 					class="admin-activity-btn"
 				>
-					View Admin Activity
+					View Post Admin Activity
 				</Button>
 			{/if}
 		</div>

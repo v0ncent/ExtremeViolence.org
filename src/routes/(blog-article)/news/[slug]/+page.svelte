@@ -130,7 +130,7 @@
 			</div>
 
 			{#if post}
-				<Comments postSlug={post.slug} postId={post.id} />
+				<Comments postSlug={post.slug} postId={post.id} service="news" />
 			{/if}
 		</article>
 	</main>

@@ -8,10 +8,10 @@
 	import Comments from '$lib/components/molecules/Comments.svelte';
 
 	import { keywords, siteBaseUrl, title } from '$lib/data/meta';
-	import type { NewsContentModel } from '$lib/utils/types';
+	import type { GalleryContentModel } from '$lib/utils/types';
 	import Image from '$lib/components/atoms/Image.svelte';
 
-	export let data: { post: NewsContentModel };
+	export let data: { post: GalleryContentModel };
 	$: ({ post } = data);
 
 	let metaKeywords = keywords;
@@ -42,7 +42,7 @@
 			}
 
 			// Redirect to gallery section after successful deletion
-			goto('/gallery');
+			goto('/gallery-section');
 		} catch (error: any) {
 			deleteError = error.message;
 		} finally {
@@ -80,12 +80,20 @@
 						{/if}
 					</AdminGuard>
 				</div>
+			{:else}
+				<div class="not-found">
+					<h2>Gallery post not found</h2>
+					<p>The requested gallery post could not be found.</p>
+					<a href="/gallery-section" class="back-link">Back to Gallery</a>
+				</div>
 			{/if}
 			<div class="content">
 				<slot />
 			</div>
 
-			<!-- Comments not available for gallery posts yet -->
+			{#if post}
+				<Comments postSlug={post.slug} postId={post.id} service="gallery" />
+			{/if}
 		</article>
 	</main>
 
@@ -229,6 +237,37 @@
 		:global(.cover-image img) {
 			max-height: flex;
 			object-fit: cover;
+		}
+
+		.not-found {
+			text-align: center;
+			padding: 3rem 1rem;
+			width: min(var(--main-column-width), 100%);
+			margin: 0 auto;
+
+			h2 {
+				color: var(--color--text);
+				margin-bottom: 1rem;
+			}
+
+			p {
+				color: var(--color--text-muted);
+				margin-bottom: 2rem;
+			}
+
+			.back-link {
+				display: inline-block;
+				padding: 0.5rem 1rem;
+				background-color: var(--color--primary);
+				color: white;
+				text-decoration: none;
+				border-radius: 4px;
+				transition: background-color 0.2s;
+
+				&:hover {
+					background-color: var(--color--primary-dark);
+				}
+			}
 		}
 
 		.content {

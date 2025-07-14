@@ -1,10 +1,10 @@
-# Database Migration for News Posts
+# Database Migration for News and Gallery Posts
 
-This document outlines the migration from static markdown files to a database-driven system for news blog posts.
+This document outlines the migration from static markdown files to a database-driven system for news and gallery blog posts.
 
 ## Overview
 
-The news blog post system has been completely overhauled to use a MongoDB database instead of static markdown files. This provides better scalability, real-time updates, and easier content management.
+The news and gallery blog post systems have been completely overhauled to use a MongoDB database instead of static markdown files. This provides better scalability, real-time updates, and easier content management.
 
 ## Architecture
 
@@ -13,18 +13,29 @@ The news blog post system has been completely overhauled to use a MongoDB databa
 - **Database**: MongoDB
 - **Models**:
   - `NewsContentModel` - Stores news post data
+  - `GalleryContentModel` - Stores gallery post data
   - `UserContentModel` - Stores user comments and interactions
 - **API Endpoints**:
-  - `POST /news/createEntry` - Create new post
-  - `GET /news/getall` - Get all posts
-  - `GET /news/get/{field}/{value}` - Get post by criteria
-  - `PUT /update` - Update post (with complete model in request body)
-  - `DELETE /delete/{field}/{value}` - Delete post
-  - `POST /userContent/createEntry` - Create/update user content
+  - **News**:
+    - `POST /news/createEntry` - Create new post
+    - `GET /news/getall` - Get all posts
+    - `GET /news/get/{field}/{value}` - Get post by criteria
+    - `PUT /news/update` - Update post (with complete model in request body)
+    - `DELETE /news/delete/{field}/{value}` - Delete post
+  - **Gallery**:
+    - `POST /gallery/createEntry` - Create new post
+    - `GET /gallery/getall` - Get all posts
+    - `GET /gallery/get/{field}/{value}` - Get post by criteria
+    - `PUT /gallery/update` - Update post (with complete model in request body)
+    - `DELETE /gallery/delete/{field}/{value}` - Delete post
+  - **User Content**:
+    - `POST /userContent/createEntry` - Create/update user content
 
 ### Frontend (SvelteKit)
 
-- **Service**: `NewsService` - Handles all database operations
+- **Services**: 
+  - `NewsService` - Handles all news database operations
+  - `GalleryService` - Handles all gallery database operations
 - **Routes**: Dynamic routes using `[slug]` for individual posts
 - **Components**: Updated to work with database data structure
 
@@ -33,17 +44,33 @@ The news blog post system has been completely overhauled to use a MongoDB databa
 ### NewsContentModel
 
 ```typescript
-interface NewsPost {
+interface NewsContentModel {
 	id: string;
 	title: string;
 	slug: string;
 	coverImage: string;
 	date: string;
-	postId: string;
 	comments: PostComment[];
 	html: string;
 	excerpt?: string;
 	tags?: string;
+}
+```
+
+### GalleryContentModel
+
+```typescript
+interface GalleryContentModel {
+	id: string;
+	title: string;
+	slug: string;
+	coverImage: string;
+	date: string;
+	comments: PostComment[];
+	excerpt?: string;
+	tags?: string;
+	width?: number;
+	height?: number;
 }
 ```
 
@@ -80,7 +107,7 @@ interface UserComment {
 
 ### 1. Post Creation
 
-- **Before**: Created markdown files in `src/routes/(blog-article)/{slug}/+page.md`
+- **Before**: Created markdown files in `src/routes/(blog-article)/{slug}/+page.md` and `src/routes/(gallery)/{slug}/+page.md`
 - **After**: Posts are stored in MongoDB via Spring Boot API
 
 ### 2. Post Rendering
@@ -88,53 +115,80 @@ interface UserComment {
 - **Before**: Static markdown files with frontmatter
 - **After**: Dynamic routes `[slug]` that fetch from database
 
-### 3. Comments System
+### 3. Gallery Migration
+
+- **Migration Script**: `scripts/migrate-gallery-to-db.js` - Converts existing markdown files to database format
+- **Features**: 
+  - Preserves image dimensions (width/height)
+  - Maintains all metadata (title, coverImage, date, etc.)
+  - Simple image + title display (no HTML content needed)
+
+### 4. Comments System
 
 - **Before**: Comments were stored locally
 - **After**: Comments are stored in both news posts and user content collections
 
-### 4. ID and Date Consistency
+### 5. ID and Date Consistency
 
 - **IDs**: All IDs (postId, commentId) now use `crypto.randomUUID()` format like userIds
 - **Dates**: All dates use ISO format: `2023-04-22T20:45:25.350Z`
 
-### 5. File Structure Changes
+### 6. File Structure Changes
 
 ```
 Removed:
 - src/routes/(blog-article)/+layout.server.ts
-- All individual post directories and +page.md files (Bruh-News-Posting, bruh, another-post*, penis)
+- src/routes/(gallery)/+layout.server.ts (old version)
+- All individual post directories and +page.md files
 
 Added:
 - src/routes/(blog-article)/[slug]/+page.server.ts
 - src/routes/(blog-article)/[slug]/+page.svelte
+- src/routes/(gallery)/gallery/[slug]/+page.svelte
 - src/lib/services/newsService.ts
+- src/lib/services/galleryService.ts
+- src/routes/api/gallery/+server.ts
+- src/routes/api/gallery/[slug]/+server.ts
 - src/routes/api/comments/+server.ts
 ```
 
 ## API Integration
 
-### Creating Posts
+### Creating News Posts
 
 ```typescript
 const result = await NewsService.createPost({
 	title: 'Post Title',
-	slug: 'post-title',
 	coverImage: '/images/posts/image.jpg',
-	html: '<h1>Content</h1>',
-	excerpt: 'Post excerpt',
-	tags: 'tag1,tag2,tag3'
+	html: '<h1>Content</h1>'
+});
+```
+
+### Creating Gallery Posts
+
+```typescript
+const result = await GalleryService.createPost({
+	title: 'Gallery Post Title',
+	coverImage: '/images/gallery/image.jpg',
+	width: 1920,
+	height: 1080
 });
 ```
 
 ### Fetching Posts
 
 ```typescript
-// Get all posts
-const posts = await NewsService.getAllPosts();
+// Get all news posts
+const newsPosts = await NewsService.getAllPosts();
 
-// Get specific post
-const post = await NewsService.getPostBySlug('post-slug');
+// Get specific news post
+const newsPost = await NewsService.getPostBySlug('post-slug');
+
+// Get all gallery posts
+const galleryPosts = await GalleryService.getAllPosts();
+
+// Get specific gallery post
+const galleryPost = await GalleryService.getPostBySlug('gallery-slug');
 ```
 
 ### Managing Comments
@@ -154,10 +208,14 @@ await NewsService.deleteComment(postId, commentId);
 
 1. **Database Setup**: Ensure MongoDB is running and Spring Boot backend is accessible
 2. **API Testing**: Use the provided test script to verify database connectivity
-3. **Content Migration**: Existing markdown posts can be migrated by:
+3. **News Content Migration**: Existing markdown posts can be migrated by:
    - Reading the markdown files
    - Converting to the new data structure
    - Posting to the database via API
+4. **Gallery Content Migration**: Run the migration script:
+   ```bash
+   node scripts/migrate-gallery-to-db.js
+   ```
 
 ## Benefits
 

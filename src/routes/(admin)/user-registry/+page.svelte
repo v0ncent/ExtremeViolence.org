@@ -5,6 +5,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
+	import { NewsService } from '$lib/services/newsService';
+	import { GalleryService } from '$lib/services/galleryService';
 
 	type UserData = {
 		_id?: number;
@@ -29,6 +31,15 @@
 	let selectedUserForContent: UserData | null = null;
 	let userContent: any = null;
 	let loadingContent = false;
+	let postExistenceMap: Map<string, boolean> = new Map();
+
+	// Computed value for deleted comments count
+	$: deletedCommentsCount =
+		userContent?.comments?.filter((c: any) => c.deletedByAdmin)?.length || 0;
+
+	// Computed value for comments on deleted posts count
+	$: commentsOnDeletedPostsCount =
+		userContent?.comments?.filter((c: any) => c.postExists === false)?.length || 0;
 
 	// Filtered and sorted users
 	$: filteredUsers = users
@@ -183,11 +194,14 @@
 		selectedUserForContent = user;
 		loadingContent = true;
 		userContent = null;
+		postExistenceMap.clear(); // Clear cache for new user
 
 		try {
 			const response = await fetch(`http://localhost:8080/userContent/get/userId/${user.userId}`);
 			if (response.ok) {
 				userContent = await response.json();
+				// Check post existence for all comments and admin comments
+				await checkAllPostsExistence(userContent);
 			} else {
 				// If user has no content, create empty structure
 				userContent = {
@@ -213,6 +227,65 @@
 	function closeUserContent() {
 		selectedUserForContent = null;
 		userContent = null;
+	}
+
+	// Function to check if a post exists
+	async function checkPostExists(postId: string, section: string): Promise<boolean> {
+		// Check cache first
+		if (postExistenceMap.has(postId)) {
+			return postExistenceMap.get(postId)!;
+		}
+
+		try {
+			let postExists = false;
+
+			if (section === 'news') {
+				const post = await NewsService.getPostById(postId);
+				postExists = post !== null;
+			} else if (section === 'gallery') {
+				const post = await GalleryService.getPostById(postId);
+				postExists = post !== null;
+			}
+
+			// Cache the result
+			postExistenceMap.set(postId, postExists);
+			return postExists;
+		} catch (error) {
+			console.error(`Error checking post existence for ${postId}:`, error);
+			postExistenceMap.set(postId, false);
+			return false;
+		}
+	}
+
+	// Function to check all posts for a user's content
+	async function checkAllPostsExistence(userContent: any): Promise<void> {
+		if (!userContent) return;
+
+		const checkPromises: Promise<void>[] = [];
+
+		// Check comments
+		if (userContent.comments && userContent.comments.length > 0) {
+			userContent.comments.forEach((comment: any) => {
+				checkPromises.push(
+					checkPostExists(comment.postId, comment.section).then((exists) => {
+						comment.postExists = exists;
+					})
+				);
+			});
+		}
+
+		// Check admin comments
+		if (userContent.adminComments && userContent.adminComments.length > 0) {
+			userContent.adminComments.forEach((adminComment: any) => {
+				checkPromises.push(
+					checkPostExists(adminComment.postId, adminComment.section).then((exists) => {
+						adminComment.postExists = exists;
+					})
+				);
+			});
+		}
+
+		await Promise.all(checkPromises);
 	}
 
 	function formatDate(date: string): string {
@@ -440,6 +513,15 @@
 														{#if comment.deletedByAdmin}
 															<span class="deleted-badge">FORCE DELETED</span>
 														{/if}
+														{#if comment.postExists !== undefined}
+															<span
+																class="post-status-badge {comment.postExists
+																	? 'post-exists'
+																	: 'post-deleted'}"
+															>
+																{comment.postExists ? 'POST EXISTS' : 'POST DELETED'}
+															</span>
+														{/if}
 													</div>
 													<div class="comment-id">
 														<code>Comment ID: {comment.commentId}</code>
@@ -471,6 +553,15 @@
 														>
 														<span class="post-title">{adminComment.postTitle}</span>
 														<span class="admin-comment-date">{formatDate(adminComment.date)}</span>
+														{#if adminComment.postExists !== undefined}
+															<span
+																class="post-status-badge {adminComment.postExists
+																	? 'post-exists'
+																	: 'post-deleted'}"
+															>
+																{adminComment.postExists ? 'POST EXISTS' : 'POST DELETED'}
+															</span>
+														{/if}
 													</div>
 													<div class="admin-comment-id">
 														<code>Admin Comment ID: {adminComment.commentId}</code>
@@ -496,7 +587,13 @@
 								<div class="summary-item">
 									<span class="summary-label">Force Deleted:</span>
 									<span class="summary-value deleted-count">
-										{userContent.comments?.filter((c) => c.deletedByAdmin).length || 0}
+										{deletedCommentsCount}
+									</span>
+								</div>
+								<div class="summary-item">
+									<span class="summary-label">On Deleted Posts:</span>
+									<span class="summary-value deleted-posts-count">
+										{commentsOnDeletedPostsCount}
 									</span>
 								</div>
 								{#if selectedUserForContent.isAdmin}
@@ -1081,6 +1178,24 @@
 		text-transform: uppercase;
 	}
 
+	.post-status-badge {
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+
+		&.post-exists {
+			background: #10b981;
+			color: white;
+		}
+
+		&.post-deleted {
+			background: #f59e0b;
+			color: white;
+		}
+	}
+
 	.comment-id,
 	.admin-comment-id {
 		display: flex;
@@ -1145,6 +1260,10 @@
 
 				&.deleted-count {
 					color: #dc2626;
+				}
+
+				&.deleted-posts-count {
+					color: #f59e0b;
 				}
 			}
 		}

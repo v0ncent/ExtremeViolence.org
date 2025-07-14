@@ -91,7 +91,7 @@ const xml = (posts: NewsContentModel[]) => `
             <div style="margin: 50px 0; font-style: italic;">
               If anything looks wrong, 
               <strong>
-                <a href="${siteBaseUrl}/${post.slug}">
+                				<a href="${siteBaseUrl}/news/${post.slug}">
                   read on the site!
                 </a>
               </strong>

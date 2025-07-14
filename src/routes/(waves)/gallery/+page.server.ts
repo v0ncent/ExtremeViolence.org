@@ -1,9 +1,15 @@
-import { filteredGalleryPosts, allGalleryPosts } from '$lib/data/blog-posts';
-
-const posts = filteredGalleryPosts.slice(0, allGalleryPosts.length);
+import { GalleryService } from '$lib/services/galleryService';
 
 export async function load() {
-	return {
-		galleryposts: posts
-	};
+	try {
+		const galleryposts = await GalleryService.getAllPosts();
+		return {
+			galleryposts
+		};
+	} catch (error) {
+		console.error('Error loading gallery posts:', error);
+		return {
+			galleryposts: []
+		};
+	}
 }

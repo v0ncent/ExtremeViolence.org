@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { BlogPost } from '$lib/utils/types';
+	import type { GalleryContentModel } from '$lib/utils/types';
 	import GalleryCard from '../molecules/GalleryCard.svelte';
 
-	export let posts: BlogPost[];
+	export let posts: GalleryContentModel[];
 
 	type Size = 'small' | 'medium' | 'large';
 
@@ -15,7 +15,7 @@
 	}
 
 	let sizedPosts = posts.map((post) => {
-		const size = getSizeFromResolution(post.width, post.height);
+		const size = getSizeFromResolution(post.width || 0, post.height || 0);
 		return { ...post, size };
 	});
 </script>

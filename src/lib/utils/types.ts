@@ -122,6 +122,12 @@ export interface NewsContentModel extends ContentModel {
 	html: string;
 }
 
+// GalleryContentModel
+export interface GalleryContentModel extends ContentModel {
+	width?: number;
+	height?: number;
+}
+
 // BannedUsersModel
 export interface BannedUsersModel extends BaseModel {
 	email: string;

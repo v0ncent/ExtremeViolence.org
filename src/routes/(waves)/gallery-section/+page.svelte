@@ -1,10 +1,10 @@
 <script lang="ts">
 	import GallerySection from '$lib/components/organisms/GallerySection.svelte';
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { GalleryContentModel } from '$lib/utils/types';
 
 	export let data: {
-		galleryposts: BlogPost[];
+		galleryposts: GalleryContentModel[];
 	};
 
 	let posts = data.galleryposts;

@@ -7,20 +7,81 @@
 	let title = '';
 	let slug = '';
 	let coverImage = '';
-	let tags: string[] = [];
-	let currentTag = '';
+	let width = 0;
+	let height = 0;
+	let date = new Date().toISOString().slice(0, 16); // Default to current date/time
 	let error = '';
 	let loading = false;
+	let detectingDimensions = false;
+	let imagePreview = '';
 
-	function addTag() {
-		if (currentTag && !tags.includes(currentTag)) {
-			tags = [...tags, currentTag];
-			currentTag = '';
+	// Function to automatically detect image dimensions
+	async function detectImageDimensions(imagePath: string) {
+		if (!imagePath.trim()) {
+			width = 0;
+			height = 0;
+			imagePreview = '';
+			return;
+		}
+
+		detectingDimensions = true;
+
+		try {
+			// Normalize the image path
+			let normalizedPath = imagePath;
+			if (!imagePath.startsWith('/')) {
+				normalizedPath = `/images/gallery/${imagePath}`;
+			}
+
+			// Create a temporary image element to get dimensions
+			return new Promise<void>((resolve, reject) => {
+				const img = new Image();
+
+				img.onload = () => {
+					width = img.naturalWidth;
+					height = img.naturalHeight;
+					imagePreview = normalizedPath;
+					detectingDimensions = false;
+					resolve();
+				};
+
+				img.onerror = () => {
+					detectingDimensions = false;
+					width = 0;
+					height = 0;
+					imagePreview = '';
+					reject(new Error('Failed to load image'));
+				};
+
+				img.src = normalizedPath;
+			});
+		} catch (error) {
+			detectingDimensions = false;
+			console.error('Error detecting image dimensions:', error);
 		}
 	}
 
-	function removeTag(tag: string) {
-		tags = tags.filter((t) => t !== tag);
+	// Watch for changes in coverImage and auto-detect dimensions
+	$: if (coverImage) {
+		detectImageDimensions(coverImage);
+	}
+
+	// Function to normalize image path for database storage
+	function normalizeImagePath(imagePath: string): string {
+		if (!imagePath.trim()) return '';
+		
+		// If it already starts with /images/gallery/, return as is
+		if (imagePath.startsWith('/images/gallery/')) {
+			return imagePath;
+		}
+		
+		// If it starts with /, assume it's a full path but not in gallery directory
+		if (imagePath.startsWith('/')) {
+			return `/images/gallery${imagePath}`;
+		}
+		
+		// Otherwise, assume it's just a filename and add the gallery path
+		return `/images/gallery/${imagePath}`;
 	}
 
 	async function handleSubmit(event: Event) {
@@ -29,11 +90,18 @@
 		error = '';
 
 		try {
+			// Normalize the image path for database storage
+			const normalizedImagePath = normalizeImagePath(coverImage);
+			
+			// Convert date to ISO format for database storage
+			const isoDate = date ? new Date(date).toISOString() : new Date().toISOString();
+			
 			const formData = new FormData();
 			formData.append('title', title);
-			formData.append('slug', slug);
-			formData.append('coverImage', coverImage);
-			formData.append('tags', tags.join(','));
+			formData.append('coverImage', normalizedImagePath);
+			formData.append('date', isoDate);
+			formData.append('width', width.toString());
+			formData.append('height', height.toString());
 
 			const response = await fetch('/api/create-gallery-post', {
 				method: 'POST',
@@ -47,7 +115,7 @@
 			}
 
 			// Redirect to the new post
-			goto(`/${data.slug}`);
+			goto(`/gallery/${data.slug}`);
 		} catch (e: any) {
 			error = e.message;
 		} finally {
@@ -77,6 +145,11 @@
 					</div>
 
 					<div class="form-group">
+						<label for="date">Date</label>
+						<input type="datetime-local" id="date" bind:value={date} required />
+					</div>
+
+					<div class="form-group">
 						<label for="coverImage">Cover Image</label>
 						<div class="image-input">
 							<input
@@ -89,33 +162,72 @@
 							<div class="image-help">
 								<p>Image should be placed in the <code>/static/images/gallery/</code> directory.</p>
 								<p>
-									Just enter the filename (e.g., "image-name.jpg") or the full path (e.g.,
-									"/images/gallery/image-name.jpg")
+									Enter just the filename (e.g., "image-name.jpg") - the system will automatically add the correct path.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					<div class="form-group">
-						<label for="tags">Tags</label>
-						<div class="tags-input">
-							<input
-								type="text"
-								id="tags"
-								bind:value={currentTag}
-								on:keydown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-							/>
-							<button type="button" on:click={addTag}>Add Tag</button>
+					{#if detectingDimensions}
+						<div class="form-group">
+							<div class="detecting-dimensions">
+								<p>Detecting image dimensions...</p>
+							</div>
 						</div>
-						<div class="tags-list">
-							{#each tags as tag}
-								<span class="tag">
-									{tag}
-									<button type="button" on:click={() => removeTag(tag)}>×</button>
-								</span>
-							{/each}
+					{:else if imagePreview && width > 0 && height > 0}
+						<div class="form-group">
+							<div class="image-preview-section">
+								<label>Image Preview & Dimensions</label>
+								<div class="image-preview">
+									<img src={imagePreview} alt="Preview" />
+									<div class="dimensions-info">
+										<p><strong>Width:</strong> {width}px</p>
+										<p><strong>Height:</strong> {height}px</p>
+										<p><strong>Aspect Ratio:</strong> {(width / height).toFixed(2)}:1</p>
+									</div>
+								</div>
+							</div>
 						</div>
-					</div>
+					{:else if coverImage && !detectingDimensions}
+						<div class="form-group">
+							<div class="error-message">
+								<p>Could not load image. Please check the file path and try again.</p>
+							</div>
+						</div>
+					{/if}
+
+					<!-- Hidden inputs for width and height (auto-populated) -->
+					<input type="hidden" bind:value={width} />
+					<input type="hidden" bind:value={height} />
+
+					{#if imagePreview && width > 0 && height > 0}
+						<div class="form-group">
+							<div class="manual-override">
+								<label>Manual Override (Optional)</label>
+								<div class="override-inputs">
+									<div class="override-input">
+										<label for="manualWidth">Width (px)</label>
+										<input 
+											type="number" 
+											id="manualWidth" 
+											bind:value={width} 
+											placeholder="Auto-detected: {width}"
+										/>
+									</div>
+									<div class="override-input">
+										<label for="manualHeight">Height (px)</label>
+										<input 
+											type="number" 
+											id="manualHeight" 
+											bind:value={height} 
+											placeholder="Auto-detected: {height}"
+										/>
+									</div>
+								</div>
+								<p class="override-help">You can manually adjust the dimensions if needed.</p>
+							</div>
+						</div>
+					{/if}
 
 					<button type="submit" disabled={loading}>
 						{loading ? 'Creating...' : 'Create Gallery Post'}
@@ -210,6 +322,110 @@
 				background: var(--color--background-alt);
 				padding: 0.2rem 0.4rem;
 				border-radius: 4px;
+			}
+		}
+
+		.detecting-dimensions {
+			padding: 1rem;
+			background: var(--color--background-alt);
+			border-radius: 4px;
+			text-align: center;
+			color: rgba(var(--color--text-rgb), 0.8);
+		}
+
+		.image-preview-section {
+			.image-preview {
+				display: flex;
+				gap: 1rem;
+				align-items: flex-start;
+				padding: 1rem;
+				background: var(--color--background-alt);
+				border-radius: 4px;
+				border: 1px solid var(--color--border);
+
+				img {
+					max-width: 200px;
+					max-height: 200px;
+					object-fit: contain;
+					border-radius: 4px;
+					border: 1px solid var(--color--border);
+				}
+
+				.dimensions-info {
+					flex: 1;
+					display: flex;
+					flex-direction: column;
+					gap: 0.5rem;
+
+					p {
+						margin: 0;
+						font-size: 0.9rem;
+						color: var(--color--text);
+
+						strong {
+							color: var(--color--primary);
+						}
+					}
+				}
+			}
+		}
+
+		.error-message {
+			padding: 1rem;
+			background: var(--color--error);
+			color: white;
+			border-radius: 4px;
+			text-align: center;
+
+			p {
+				margin: 0;
+			}
+		}
+
+		.manual-override {
+			padding: 1rem;
+			background: var(--color--background-alt);
+			border-radius: 4px;
+			border: 1px solid var(--color--border);
+
+			label {
+				font-weight: 500;
+				margin-bottom: 0.5rem;
+				display: block;
+			}
+
+			.override-inputs {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 1rem;
+				margin-bottom: 0.5rem;
+			}
+
+			.override-input {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+
+				label {
+					font-size: 0.875rem;
+					font-weight: 400;
+					margin-bottom: 0;
+				}
+
+				input {
+					padding: 0.5rem;
+					border: 1px solid var(--color--border);
+					border-radius: 4px;
+					background: var(--color--background);
+					color: var(--color--text);
+					font-size: 0.875rem;
+				}
+			}
+
+			.override-help {
+				font-size: 0.8rem;
+				color: rgba(var(--color--text-rgb), 0.7);
+				margin: 0;
 			}
 		}
 

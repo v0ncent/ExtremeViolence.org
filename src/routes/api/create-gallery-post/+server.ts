@@ -1,80 +1,46 @@
 import { json } from '@sveltejs/kit';
-import fs from 'fs/promises';
-import path from 'path';
-import sharp from 'sharp';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request }) {
-	const formData = await request.formData();
-	const title = formData.get('title');
-	let slug = formData.get('title')?.toString().replace(/ /g, '-');
-	const excerpt = 'Gallery Post';
-	const coverImage = formData.get('coverImage');
-	const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
-
-	if (!title || !slug || !excerpt || !coverImage) {
-		return json({ error: 'Missing required fields' }, { status: 400 });
-	}
-
+export const POST: RequestHandler = async ({ request }) => {
 	try {
-		// Check for existing slugs and generate a unique one if needed
-		const galleryDir = path.join(process.cwd(), 'src', 'routes', '(gallery)');
-		const existingDirs = await fs.readdir(galleryDir);
-		let uniqueSlug = slug;
-		let counter = 1;
+		const formData = await request.formData();
+		const title = formData.get('title')?.toString();
+		const coverImage = formData.get('coverImage')?.toString();
+		const date = formData.get('date')?.toString() || new Date().toISOString();
+		const width = parseInt(formData.get('width')?.toString() || '0');
+		const height = parseInt(formData.get('height')?.toString() || '0');
 
-		while (existingDirs.includes(uniqueSlug)) {
-			uniqueSlug = `${slug}-${counter}`;
-			counter++;
-		}
-		slug = uniqueSlug;
-
-		// Format the cover image path
-		let formattedCoverImage = coverImage.toString().startsWith('/images/gallery/')
-			? coverImage.toString()
-			: `/images/gallery/${coverImage.toString()}`;
-
-		// Get image dimensions
-		const imagePath = path.join(process.cwd(), 'static', formattedCoverImage.slice(1));
-		const metadata = await sharp(imagePath).metadata();
-
-		if (!metadata.width || !metadata.height) {
-			return json({ error: 'Could not get image dimensions' }, { status: 400 });
+		if (!title || !coverImage) {
+			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		// Create the post directory
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(gallery)', slug);
-		await fs.mkdir(postDir, { recursive: true });
+		const postData = {
+			title,
+			coverImage,
+			date,
+			width,
+			height
+		};
 
-		// Create the markdown file with frontmatter and required script section
-		const markdownContent = `---
-title: ${title}
-slug: ${slug}
-coverImage: ${formattedCoverImage}
-date: ${new Date().toISOString()}
-excerpt: ${excerpt}
-width: ${metadata.width}
-height: ${metadata.height}
-tags:
-${tags.map((tag) => `  - ${tag}`).join('\n')}
----
+		const response = await fetch('http://localhost:8080/gallery/createEntry', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(postData)
+		});
 
-<script>
-  import Callout from "$lib/components/molecules/Callout.svelte";
-  import CodeBlock from "$lib/components/molecules/CodeBlock.svelte";
-  import Image from "$lib/components/atoms/Image.svelte";
-</script>
-`;
+		if (!response.ok) {
+			const errorData = await response.json();
+			return json({ error: errorData.message || 'Failed to create gallery post' }, { status: 500 });
+		}
 
-		await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
-
-		// Return success with the slug and a flag to trigger refresh
+		const result = await response.json();
 		return json({
 			success: true,
-			slug,
+			slug: result.slug,
 			shouldRefresh: true
 		});
 	} catch (error) {
 		console.error('Error creating gallery post:', error);
 		return json({ error: 'Failed to create gallery post' }, { status: 500 });
 	}
-}
+};

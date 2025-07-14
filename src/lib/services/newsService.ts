@@ -228,11 +228,11 @@ export class NewsService {
 			const updatedComments = post.comments.map((comment) =>
 				comment.commentId === commentId
 					? {
-							userId: comment.userId || commentToUpdate.userId, // Fallback to original userId if empty
-							commentId: comment.commentId,
-							text: newText,
-							date: new Date().toISOString()
-					  }
+						userId: comment.userId || commentToUpdate.userId, // Fallback to original userId if empty
+						commentId: comment.commentId,
+						text: newText,
+						date: new Date().toISOString()
+					}
 					: comment
 			);
 
@@ -445,9 +445,9 @@ export class NewsService {
 					const updatedUserComments = userContent.comments.map((comment) =>
 						comment.commentId === commentId
 							? {
-									...comment,
-									deletedByAdmin: true
-							  }
+								...comment,
+								deletedByAdmin: true
+							}
 							: comment
 					);
 
@@ -511,18 +511,18 @@ export class NewsService {
 			const updatedComments = post.comments.map((comment) =>
 				comment.commentId === commentId
 					? {
-							...comment,
-							adminComments: [
-								...(comment.adminComments || []),
-								{
-									userId: adminUserId,
-									commentId: adminCommentId,
-									onComment: commentId,
-									text: adminCommentText,
-									date: new Date().toISOString()
-								}
-							]
-					  }
+						...comment,
+						adminComments: [
+							...(comment.adminComments || []),
+							{
+								userId: adminUserId,
+								commentId: adminCommentId,
+								onComment: commentId,
+								text: adminCommentText,
+								date: new Date().toISOString()
+							}
+						]
+					}
 					: comment
 			);
 
@@ -590,11 +590,11 @@ export class NewsService {
 			const updatedComments = post.comments.map((comment) =>
 				comment.commentId === commentId
 					? {
-							...comment,
-							adminComments: (comment.adminComments || []).filter(
-								(ac) => ac.commentId !== adminCommentId
-							)
-					  }
+						...comment,
+						adminComments: (comment.adminComments || []).filter(
+							(ac) => ac.commentId !== adminCommentId
+						)
+					}
 					: comment
 			);
 
@@ -687,6 +687,41 @@ export class NewsService {
 		} catch (error) {
 			console.error('Error fetching force-deleted comments:', error);
 			return [];
+		}
+	}
+
+	// Get admin activity for a specific post only
+	static async getPostAdminActivity(postId: string): Promise<{
+		forceDeletedComments: PostComment[];
+		adminComments: PostAdminComment[];
+	}> {
+		try {
+			const post = await this.getPostById(postId);
+			if (!post) {
+				throw new Error('Post not found');
+			}
+
+			// Get force-deleted comments from this post
+			const forceDeletedComments = post.comments.filter(comment => comment.deletedByAdmin);
+
+			// Get all admin comments from this post
+			const adminComments: PostAdminComment[] = [];
+			post.comments.forEach(comment => {
+				if (comment.adminComments && comment.adminComments.length > 0) {
+					adminComments.push(...comment.adminComments);
+				}
+			});
+
+			return {
+				forceDeletedComments,
+				adminComments
+			};
+		} catch (error) {
+			console.error('Error fetching post admin activity:', error);
+			return {
+				forceDeletedComments: [],
+				adminComments: []
+			};
 		}
 	}
 }

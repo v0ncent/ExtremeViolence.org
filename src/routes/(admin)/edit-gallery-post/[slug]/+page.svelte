@@ -4,15 +4,35 @@
 	import WebsiteTabs from '$lib/components/organisms/WebsiteTabs.svelte';
 	import { goto } from '$app/navigation';
 	import Image from '$lib/components/atoms/Image.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { GalleryContentModel } from '$lib/utils/types';
 
-	export let data: { post: BlogPost };
+	export let data: { post: GalleryContentModel };
 
 	let title = data.post.title;
 	let coverImage = data.post.coverImage;
+	// Convert ISO date string to datetime-local format (YYYY-MM-DDTHH:MM)
+	let date = data.post.date ? new Date(data.post.date).toISOString().slice(0, 16) : '';
 	let error = '';
 	let loading = false;
 	let showPreview = false;
+
+	// Function to normalize image path for database storage
+	function normalizeImagePath(imagePath: string): string {
+		if (!imagePath.trim()) return '';
+
+		// If it already starts with /images/gallery/, return as is
+		if (imagePath.startsWith('/images/gallery/')) {
+			return imagePath;
+		}
+
+		// If it starts with /, assume it's a full path but not in gallery directory
+		if (imagePath.startsWith('/')) {
+			return `/images/gallery${imagePath}`;
+		}
+
+		// Otherwise, assume it's just a filename and add the gallery path
+		return `/images/gallery/${imagePath}`;
+	}
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
@@ -20,10 +40,17 @@
 		error = '';
 
 		try {
+			// Normalize the image path for database storage
+			const normalizedImagePath = normalizeImagePath(coverImage);
+
+			// Convert date to ISO format for database storage
+			const isoDate = date ? new Date(date).toISOString() : new Date().toISOString();
+
 			const formData = new FormData();
 			formData.append('slug', data.post.slug);
 			formData.append('title', title);
-			formData.append('coverImage', coverImage);
+			formData.append('coverImage', normalizedImagePath);
+			formData.append('date', isoDate);
 
 			const response = await fetch('/api/edit-gallery-post', {
 				method: 'PUT',
@@ -37,7 +64,7 @@
 			}
 
 			// Redirect to gallery section after successful edit
-			goto('/gallery');
+			goto('/gallery-section');
 		} catch (e: any) {
 			error = e.message;
 		} finally {
@@ -68,6 +95,11 @@
 						</div>
 
 						<div class="form-group">
+							<label for="date">Date</label>
+							<input type="datetime-local" id="date" bind:value={date} required />
+						</div>
+
+						<div class="form-group">
 							<label for="coverImage">Cover Image</label>
 							<div class="image-input">
 								<input
@@ -77,10 +109,12 @@
 									placeholder="e.g., image-name.png"
 								/>
 								<div class="image-help">
-									<p>Image should be placed in the <code>/static/images/posts/</code> directory.</p>
 									<p>
-										Just enter the filename (e.g., "image-name.png") or the full path (e.g.,
-										"/images/posts/image-name.png")
+										Image should be placed in the <code>/static/images/gallery/</code> directory.
+									</p>
+									<p>
+										Enter just the filename (e.g., "image-name.png") - the system will automatically
+										add the correct path.
 									</p>
 								</div>
 							</div>

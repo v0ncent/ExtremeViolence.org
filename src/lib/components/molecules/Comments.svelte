@@ -50,7 +50,6 @@
 		const unsubscribe = auth.subscribe(($auth) => {
 			if ($auth.user) {
 				currentUser = $auth.user;
-				console.log('Current user:', currentUser);
 			}
 		});
 
@@ -283,11 +282,10 @@
 
 		try {
 			const adminData = await serviceInstance.getPostAdminActivity(postId);
-			console.log('Post Admin Activity Data:', adminData);
 
 			// Display post-specific admin activity
 			alert(
-				`Admin Activity for this post:\n\nForce-deleted comments: ${adminData.forceDeletedComments.length}\nAdmin comments: ${adminData.adminComments.length}\n\nCheck console for detailed data.`
+				`Admin Activity for this post:\n\nForce-deleted comments: ${adminData.forceDeletedComments.length}\nAdmin comments: ${adminData.adminComments.length}`
 			);
 		} catch (error) {
 			console.error('Error fetching post admin activity:', error);

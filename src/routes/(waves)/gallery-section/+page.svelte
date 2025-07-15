@@ -2,6 +2,7 @@
 	import GallerySection from '$lib/components/organisms/GallerySection.svelte';
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
 	import type { GalleryContentModel } from '$lib/utils/types';
+	import { title } from '$lib/data/meta';
 
 	export let data: {
 		galleryposts: GalleryContentModel[];
@@ -10,11 +11,16 @@
 	let posts = data.galleryposts;
 </script>
 
+<svelte:head>
+	<title>Gallery - {title}</title>
+	<meta name="description" content="Art gallery featuring works by Vincent Banks" />
+</svelte:head>
+
 <div class="layout-container">
 	<div class="header">
 		<h1>Gallery</h1>
 		<AdminGuard>
-			<a href="/create-gallery-post" class="create-post-button">Create Post</a>
+			<a href="/admin/create-gallery-post" class="create-post-button">Create Post</a>
 		</AdminGuard>
 	</div>
 	<GallerySection {posts} />

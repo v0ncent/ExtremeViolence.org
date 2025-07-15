@@ -128,6 +128,12 @@ export interface GalleryContentModel extends ContentModel {
 	height?: number;
 }
 
+// ComicsContentModel
+export interface ComicsContentModel extends ContentModel {
+	series: boolean;
+	description: string;
+}
+
 // BannedUsersModel
 export interface BannedUsersModel extends BaseModel {
 	email: string;

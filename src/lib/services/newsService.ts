@@ -134,19 +134,12 @@ export class NewsService {
 	// Add a comment to a post
 	static async addComment(postId: string, userId: string, text: string): Promise<boolean> {
 		try {
-			console.log('Adding comment with userId:', userId);
 			const date = new Date().toISOString();
 			const post = await this.getPostById(postId);
 			if (!post) throw new Error('Post not found');
 
 			// Filter out any existing comments with empty userId to prevent data corruption
 			const validExistingComments = post.comments.filter((c) => c.userId && c.userId.trim() !== '');
-			console.log(
-				'Valid existing comments:',
-				validExistingComments.length,
-				'out of',
-				post.comments.length
-			);
 
 			const newComment: PostCommentRequest = { userId, text, date };
 			const updatedComments: PostCommentRequest[] = [
@@ -214,7 +207,6 @@ export class NewsService {
 	// Update a comment
 	static async updateComment(postId: string, commentId: string, newText: string): Promise<boolean> {
 		try {
-			console.log('Updating comment with commentId:', commentId);
 			// Get the post to find the comment and its author
 			const post = await this.getPostById(postId);
 			if (!post) throw new Error('Post not found');
@@ -222,7 +214,6 @@ export class NewsService {
 			// Find the comment to get the userId
 			const commentToUpdate = post.comments.find((c) => c.commentId === commentId);
 			if (!commentToUpdate) throw new Error('Comment not found');
-			console.log('Found comment to update with userId:', commentToUpdate.userId);
 
 			// Update the comment in the post's comments array - explicitly preserve all fields
 			const updatedComments = post.comments.map((comment) =>
@@ -241,11 +232,9 @@ export class NewsService {
 			if (!postUpdateSuccess) throw new Error('Failed to update post comment');
 
 			// Update the comment in the user_content database
-			console.log('Attempting to update user_content for userId:', commentToUpdate.userId);
 
 			if (!commentToUpdate.userId || commentToUpdate.userId.trim() === '') {
 				console.error('Cannot update user_content: comment has empty userId');
-				console.log('Attempting to find user_content by searching for commentId:', commentId);
 
 				// Try to find the user_content by searching for the commentId
 				const allUserContentResponse = await fetch(`${API_BASE_URL}/userContent/getall`);
@@ -281,7 +270,6 @@ export class NewsService {
 							throw new Error('Failed to update user content');
 						}
 
-						console.log('Successfully updated user_content via search');
 						return true;
 					} else {
 						console.error('Could not find user_content containing commentId:', commentId);
@@ -299,8 +287,6 @@ export class NewsService {
 
 			if (userContentResponse.ok) {
 				const userContent: UserContentModel = await userContentResponse.json();
-				console.log('Found user_content, updating comment:', commentId);
-				console.log('Original user_content comments:', userContent.comments);
 
 				// Find the comment in user_content by commentId
 				const existingComment = userContent.comments.find((c) => c.commentId === commentId);
@@ -317,26 +303,15 @@ export class NewsService {
 
 				updatedUserComments = userContent.comments.map((comment) => {
 					if (comment.commentId === commentId) {
-						console.log(
-							'Updating comment:',
-							comment.commentId,
-							'from:',
-							comment.text,
-							'to:',
-							newText
-						);
 						return { ...comment, text: newText, date: new Date().toISOString() };
 					}
 					return comment;
 				});
 
-				console.log('Updated user_content comments:', updatedUserComments);
-
 				// Remove any _class field if present
 				const { _class, ...userContentClean } = userContent as any;
 
 				const updatePayload = { ...userContentClean, comments: updatedUserComments };
-				console.log('Sending update payload:', updatePayload);
 
 				const userContentSaveResponse = await fetch(`${API_BASE_URL}/userContent/update`, {
 					method: 'PUT',
@@ -353,8 +328,6 @@ export class NewsService {
 					throw new Error('Failed to update user content');
 				}
 
-				console.log('Successfully updated user_content');
-
 				// Verify the update by fetching the user_content again
 				const verifyResponse = await fetch(
 					`${API_BASE_URL}/userContent/get/userId/${commentToUpdate.userId}`
@@ -364,7 +337,6 @@ export class NewsService {
 					const updatedComment = verifiedUserContent.comments.find(
 						(c: any) => c.commentId === commentId
 					);
-					console.log('Verification - updated comment text:', updatedComment?.text);
 				}
 			} else {
 				console.error(
@@ -422,7 +394,6 @@ export class NewsService {
 		adminUserName: string
 	): Promise<boolean> {
 		try {
-			console.log('Admin force deleting comment:', commentId, 'by admin:', adminUserName);
 			const post = await this.getPostById(postId);
 			if (!post) throw new Error('Post not found');
 

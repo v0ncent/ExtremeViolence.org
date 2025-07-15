@@ -32,7 +32,6 @@ export class AdminService {
 				return false;
 			}
 
-			console.log(`Admin check for ${email}: ${data.isAdmin ? 'ADMIN' : 'USER'}`);
 			return data.isAdmin;
 		} catch (error) {
 			console.error('Error checking admin status:', error);
@@ -59,7 +58,6 @@ export class AdminService {
 			// Check if the user's email exists in the admin list
 			const isAdmin = adminData.some((admin) => admin.email === email);
 
-			console.log(`Server admin check for ${email}: ${isAdmin ? 'ADMIN' : 'USER'}`);
 			return isAdmin;
 		} catch (error) {
 			console.error('Error checking admin status:', error);

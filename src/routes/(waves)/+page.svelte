@@ -5,12 +5,13 @@
 	import ContentWarning from '$lib/components/organisms/ContentWarning.svelte';
 	import Foxy from '$lib/components/atoms/Foxy.svelte';
 	import { onMount } from 'svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { NewsContentModel, ComicsContentModel, GalleryContentModel } from '$lib/utils/types';
+	import { title, description } from '$lib/data/meta';
 
 	export let data: {
-		newsposts: BlogPost[];
-		galleryandcomicposts: BlogPost[];
-		comicposts: BlogPost[];
+		newsposts: NewsContentModel[];
+		galleryandcomicposts: GalleryContentModel[];
+		comicposts: ComicsContentModel[];
 	};
 
 	let { newsposts, galleryandcomicposts, comicposts } = data;
@@ -29,6 +30,11 @@
 		showWarning = false;
 	}
 </script>
+
+<svelte:head>
+	<title>{title}</title>
+	<meta name="description" content={description} />
+</svelte:head>
 
 {#if showWarning}
 	<ContentWarning onAccept={acceptWarning} />

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import BlogPostCard from '$lib/components/molecules/BlogPostCard.svelte';
+	import ComicCard from '$lib/components/molecules/ComicCard.svelte';
 	import ContentSection from '$lib/components/organisms/ContentSection.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { ComicsContentModel } from '$lib/utils/types';
 
-	export let posts: BlogPost[];
+	export let posts: ComicsContentModel[];
 	export let layout: 'stacked' | 'grid' = 'stacked'; // default is stacked
 	export let sectiontitle: string;
 </script>
@@ -11,7 +11,7 @@
 <ContentSection id="latest-comics" title={sectiontitle}>
 	<div class="grid {layout}">
 		{#each posts as post}
-			<BlogPostCard
+			<ComicCard
 				slug={post.slug}
 				title={post.title}
 				excerpt={''}

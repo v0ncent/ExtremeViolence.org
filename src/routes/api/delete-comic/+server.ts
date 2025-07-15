@@ -1,45 +1,25 @@
 // src/routes/api/delete-comic/+server.ts
 import { json } from '@sveltejs/kit';
-import fs from 'fs/promises';
-import path from 'path';
+import type { RequestHandler } from './$types';
+import { ComicsService } from '$lib/services/comicsService';
 
-export async function DELETE({ request }) {
-	const { slug } = await request.json();
-
-	if (!slug) {
-		return json({ error: 'Missing slug' }, { status: 400 });
-	}
-
+export const DELETE: RequestHandler = async ({ request }) => {
 	try {
-		// Check if the comic exists before trying to delete
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(comic)', slug);
-		const markdownPath = path.join(postDir, '+page.md');
+		const { slug } = await request.json();
 
-		try {
-			await fs.access(markdownPath);
-		} catch {
-			return json({ error: 'Comic not found' }, { status: 404 });
+		if (!slug) {
+			return json({ error: 'Comic slug is required' }, { status: 400 });
 		}
 
-		// Delete the markdown file and directory
-		await fs.unlink(markdownPath);
-		await fs.rmdir(postDir);
+		const success = await ComicsService.deletePost(slug);
 
-		// Delete the images directory (if it exists)
-		const imagesDir = path.join(process.cwd(), 'static', 'images', 'comics', slug);
-		try {
-			await fs.rm(imagesDir, { recursive: true, force: true });
-		} catch (error) {
-			// Images directory might not exist, which is fine
-			console.log('Images directory not found, skipping deletion');
+		if (success) {
+			return json({ success: true, message: 'Comic deleted successfully' });
+		} else {
+			return json({ error: 'Failed to delete comic' }, { status: 500 });
 		}
-
-		return json({
-			success: true,
-			shouldRefresh: true
-		});
 	} catch (error) {
 		console.error('Error deleting comic:', error);
-		return json({ error: 'Failed to delete comic' }, { status: 500 });
+		return json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

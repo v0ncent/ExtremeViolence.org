@@ -23,9 +23,9 @@
 	function triggerFoxy() {
 		showJumpscare = true;
 		if (audio) {
-			audio.play().catch((e) => {
-				console.log('Audio play failed:', e);
-			});
+					audio.play().catch((e) => {
+			// Audio play failed
+		});
 		}
 		setTimeout(() => {
 			showJumpscare = false;

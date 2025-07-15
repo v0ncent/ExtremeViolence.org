@@ -1,20 +1,26 @@
 <script lang="ts">
 	import NewsSection from '$lib/components/organisms/NewsSection.svelte';
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { NewsContentModel } from '$lib/utils/types';
+	import { title } from '$lib/data/meta';
 
 	export let data: {
-		newsposts: BlogPost[];
+		newsposts: NewsContentModel[];
 	};
 
 	let { newsposts } = data;
 </script>
 
+<svelte:head>
+	<title>News - {title}</title>
+	<meta name="description" content="Latest news and updates from Extreme Violence" />
+</svelte:head>
+
 <div class="layout-container">
 	<div class="header">
 		<h1>News</h1>
 		<AdminGuard>
-			<a href="/create-post" class="create-post-button">Create Post</a>
+			<a href="/admin/create-post" class="create-post-button">Create Post</a>
 		</AdminGuard>
 	</div>
 	{#if newsposts && newsposts.length > 0}

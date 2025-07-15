@@ -1,9 +1,9 @@
 <script lang="ts">
 	import BlogPostCard from '$lib/components/molecules/BlogPostCard.svelte';
 	import ContentSection from '$lib/components/organisms/ContentSection.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { GalleryContentModel } from '$lib/utils/types';
 
-	export let galleryandcomicposts: BlogPost[];
+	export let galleryandcomicposts: GalleryContentModel[];
 </script>
 
 <ContentSection id="recent-posts" title="Recent Postings" align="left">

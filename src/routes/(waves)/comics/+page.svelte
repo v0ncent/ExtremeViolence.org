@@ -1,17 +1,20 @@
 <script lang="ts">
 	import ComicsSection from '$lib/components/organisms/ComicsSection.svelte';
 	import AdminGuard from '$lib/components/molecules/AdminGuard.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { ComicsContentModel } from '$lib/utils/types';
+	import { title } from '$lib/data/meta';
 
 	export let data: {
-		comicPosts: BlogPost[];
+		comicPosts: ComicsContentModel[];
+		backendError?: string;
 	};
 
 	let posts = data.comicPosts;
+	let backendError = data.backendError;
 </script>
 
 <svelte:head>
-	<title>Latest Comics</title>
+	<title>Comics - {title}</title>
 	<meta name="description" content="Latest comics from Vincent Banks!" />
 </svelte:head>
 
@@ -19,10 +22,19 @@
 	<div class="header">
 		<h1>Comics</h1>
 		<AdminGuard>
-			<a href="/create-comic" class="create-post-button">Create Comic</a>
+							<a href="/admin/create-comic" class="create-post-button">Create Comic</a>
 		</AdminGuard>
 	</div>
-	<ComicsSection {posts} />
+
+	{#if backendError}
+		<div class="backend-error">
+			<h2>Service Temporarily Unavailable</h2>
+			<p>{backendError}</p>
+			<p>Please try again later or contact an administrator.</p>
+		</div>
+	{:else}
+		<ComicsSection {posts} />
+	{/if}
 </div>
 
 <style lang="scss">
@@ -57,6 +69,24 @@
 		&:hover {
 			background-color: var(--color--primary-dark);
 			filter: drop-shadow(0px 0px 5px var(--color--primary));
+		}
+	}
+
+	.backend-error {
+		text-align: center;
+		padding: 3rem 1rem;
+		background: var(--color--background-alt);
+		border-radius: 8px;
+		border: 1px solid var(--color--border);
+
+		h2 {
+			color: var(--color--error);
+			margin-bottom: 1rem;
+		}
+
+		p {
+			color: var(--color--text-muted);
+			margin-bottom: 0.5rem;
 		}
 	}
 </style>

@@ -1,8 +1,14 @@
 <script lang="ts">
 	import Image from '$lib/components/atoms/Image.svelte';
+	import { title } from '$lib/data/meta';
 
 	let photoSrc = 'images/site-assets/Self-Portrait-GOOD.jpg';
 </script>
+
+<svelte:head>
+	<title>About - {title}</title>
+	<meta name="description" content="About Vincent Banks - Artist behind Extreme Violence" />
+</svelte:head>
 
 <section class="about-container">
 	<div class="photo-wrapper">

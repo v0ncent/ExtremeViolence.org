@@ -70,7 +70,7 @@
 					<p>by Vincent Banks</p>
 					<AdminGuard>
 						<div class="action-buttons">
-							<a href="/edit-gallery-post/{post.slug}" class="edit-button">Edit Post</a>
+							<a href="/admin/edit-gallery-post/{post.slug}" class="edit-button">Edit Post</a>
 							<button class="delete-button" on:click={handleDelete} disabled={isDeleting}>
 								{isDeleting ? 'Deleting...' : 'Delete Post'}
 							</button>

@@ -60,7 +60,7 @@
 
 	async function handleEdit() {
 		if (!post) return;
-		goto(`/edit-post/${post.slug}`);
+		goto(`/admin/edit-post/${post.slug}`);
 	}
 </script>
 

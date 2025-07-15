@@ -2,12 +2,21 @@
 // So they can be added as suffixes on different pages
 // Via <svelte:head>
 
-export const siteBaseUrl = 'https://sveltekit-static-blog-template.vercel.app/';
+export const siteBaseUrl = 'https://extremeviolence.org/';
 
-export const keywords = [];
+export const keywords = [
+    'comics',
+    'art',
+    'romance',
+    'macabre',
+    'extreme violence',
+    'vincent banks',
+    'digital art',
+    'webcomics'
+];
 
-export const description = '';
+export const description = 'Extreme Violence - Art and comics by Vincent Banks featuring romance and macabre themes.';
 
-export const title = '';
+export const title = 'Extreme Violence';
 
-export const image = ``;
+export const image = `/images/site-assets/El-Logo-B.png`;

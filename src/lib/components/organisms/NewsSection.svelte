@@ -1,9 +1,9 @@
 <script lang="ts">
 	import BlogPostCard from '$lib/components/molecules/BlogPostCard.svelte';
 	import ContentSection from '$lib/components/organisms/ContentSection.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import type { NewsContentModel } from '$lib/utils/types';
 
-	export let newsposts: BlogPost[];
+	export let newsposts: NewsContentModel[];
 	export let sectiontitle: string;
 	export let sectionid: string;
 </script>
@@ -17,7 +17,6 @@
 				excerpt={post.excerpt || ''}
 				coverImage={post.coverImage}
 				showImage={true}
-				previewHtml={post.previewHtml}
 			/>
 		{/each}
 	</div>

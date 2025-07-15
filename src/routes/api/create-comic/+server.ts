@@ -1,100 +1,80 @@
 import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { ComicsService } from '$lib/services/comicsService';
+import sharp from 'sharp';
 import fs from 'fs/promises';
 import path from 'path';
-import sharp from 'sharp';
 
-export async function POST({ request }) {
-	const formData = await request.formData();
-	const title = formData.get('title');
-	let slug = formData.get('title')?.toString().replace(/ /g, '-').toLowerCase();
-	const excerpt = 'Comics';
-	const description = formData.get('description');
-	const isSeries = formData.get('isSeries') === 'true';
-	const tags = formData.get('tags')?.toString().split(',').filter(Boolean) || [];
-
-	// Handle file uploads
-	const coverImage = formData.get('coverImage') as File;
-	const pages = formData.getAll('pages') as File[];
-
-	if (!title || !slug || !excerpt || !description || !coverImage) {
-		return json({ error: 'Missing required fields' }, { status: 400 });
-	}
-
+export const POST: RequestHandler = async ({ request }) => {
 	try {
-		// Check for existing slugs and generate a unique one if needed
-		const comicDir = path.join(process.cwd(), 'src', 'routes', '(comic)');
-		const existingDirs = await fs.readdir(comicDir);
-		let uniqueSlug = slug;
-		let counter = 1;
+		const formData = await request.formData();
+		const title = formData.get('title') as string;
+		const description = formData.get('description') as string;
+		const isSeries = formData.get('isSeries') === 'true';
+		const coverImage = formData.get('coverImage') as File;
+		const pages = formData.getAll('pages') as File[];
 
-		while (existingDirs.includes(uniqueSlug)) {
-			uniqueSlug = `${slug}-${counter}`;
-			counter++;
-		}
-		slug = uniqueSlug;
-
-		// Create the post directory
-		const postDir = path.join(process.cwd(), 'src', 'routes', '(comic)', slug);
-		await fs.mkdir(postDir, { recursive: true });
-
-		// Create the images directory structure
-		const imagesDir = path.join(process.cwd(), 'static', 'images', 'comics', slug);
-		await fs.mkdir(imagesDir, { recursive: true });
-
-		// Handle cover image upload
-		let coverImagePath = '';
-		if (isSeries) {
-			coverImagePath = `/images/comics/${slug}/SeriesCover.jpg`;
-			const coverBuffer = Buffer.from(await coverImage.arrayBuffer());
-			await sharp(coverBuffer)
-				.jpeg({ quality: 90 })
-				.toFile(path.join(process.cwd(), 'static', coverImagePath.slice(1)));
-		} else {
-			coverImagePath = `/images/comics/${slug}/1.jpg`;
-			const coverBuffer = Buffer.from(await coverImage.arrayBuffer());
-			await sharp(coverBuffer)
-				.jpeg({ quality: 90 })
-				.toFile(path.join(process.cwd(), 'static', coverImagePath.slice(1)));
+		if (!title || !description || !coverImage) {
+			return json({ error: 'Missing required fields' }, { status: 400 });
 		}
 
-		// Handle page uploads for short stories
-		if (!isSeries && pages.length > 0) {
-			for (let i = 0; i < pages.length; i++) {
-				const page = pages[i];
-				const pageNumber = i + 1;
-				const pagePath = `/images/comics/${slug}/${pageNumber}.jpg`;
-				const pageBuffer = Buffer.from(await page.arrayBuffer());
+		try {
+			// First, create the post in the database to get the post ID
+			const postData = {
+				title,
+				coverImage: '', // Will be updated after we know the post ID
+				series: isSeries,
+				description
+			};
 
-				await sharp(pageBuffer)
-					.jpeg({ quality: 90 })
-					.toFile(path.join(process.cwd(), 'static', pagePath.slice(1)));
+			const result = await ComicsService.createPost(postData);
+			if (!result.success) {
+				throw new Error('Failed to create comic in database');
 			}
+
+			// Use the post ID (slug) for the directory name
+			const postId = result.slug;
+			const imagesDir = path.join(process.cwd(), 'static', 'images', 'comics', postId);
+			await fs.mkdir(imagesDir, { recursive: true });
+
+			// Handle cover image upload
+			let coverImagePath = '';
+			if (isSeries) {
+				coverImagePath = `/images/comics/${postId}/SeriesCover.jpg`;
+			} else {
+				coverImagePath = `/images/comics/${postId}/1.jpg`;
+			}
+
+			// Upload the cover image
+			const coverBuffer = Buffer.from(await coverImage.arrayBuffer());
+			await sharp(coverBuffer)
+				.jpeg({ quality: 90 })
+				.toFile(path.join(process.cwd(), 'static', coverImagePath.slice(1)));
+
+			// Handle page uploads for short stories
+			if (!isSeries && pages.length > 0) {
+				for (let i = 0; i < pages.length; i++) {
+					const page = pages[i];
+					const pageNumber = i + 2; // Start from 2 since 1.jpg is the cover
+					const pagePath = `/images/comics/${postId}/${pageNumber}.jpg`;
+					const pageBuffer = Buffer.from(await page.arrayBuffer());
+
+					await sharp(pageBuffer)
+						.jpeg({ quality: 90 })
+						.toFile(path.join(process.cwd(), 'static', pagePath.slice(1)));
+				}
+			}
+
+			// Update the post with the correct cover image path
+			await ComicsService.updatePost(postId, { coverImage: coverImagePath });
+
+			return json({ success: true, slug: postId });
+		} catch (error) {
+			console.error('Error creating comic:', error);
+			return json({ error: 'Failed to create comic' }, { status: 500 });
 		}
-
-		// Create the markdown file with frontmatter
-		const markdownContent = `---
-title: ${title}
-slug: ${slug}
-coverImage: ${coverImagePath}
-date: ${new Date().toISOString()}
-excerpt: ${excerpt}
-series: ${isSeries}
-description: ${description}
-tags:
-${tags.map((tag) => `  - ${tag}`).join('\n')}
----
-`;
-
-		await fs.writeFile(path.join(postDir, '+page.md'), markdownContent);
-
-		// Return success with the slug and a flag to trigger refresh
-		return json({
-			success: true,
-			slug,
-			shouldRefresh: true
-		});
 	} catch (error) {
-		console.error('Error creating comic:', error);
-		return json({ error: 'Failed to create comic' }, { status: 500 });
+		console.error('Error processing comic creation:', error);
+		return json({ error: 'Internal server error' }, { status: 500 });
 	}
-}
+};

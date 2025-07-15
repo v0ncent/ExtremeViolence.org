@@ -25,8 +25,14 @@ export async function GET({ params }) {
 		// Filter for numbered jpg files (1.jpg, 2.jpg, etc.)
 		const pageFiles = files
 			.filter((file) => /^\d+\.jpg$/.test(file))
-			.map((file) => file.replace('.jpg', ''))
-			.sort((a, b) => parseInt(a) - parseInt(b));
+			.map((file) => {
+				const number = parseInt(file.replace('.jpg', ''));
+				return {
+					path: `/images/comics/${slug}/${file}`,
+					number: number
+				};
+			})
+			.sort((a, b) => a.number - b.number);
 
 		return json({ pages: pageFiles });
 	} catch (error) {

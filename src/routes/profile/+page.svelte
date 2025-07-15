@@ -5,6 +5,7 @@
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
 	import Button from '$lib/components/atoms/Button.svelte';
+	import { title as siteTitle } from '$lib/data/meta';
 
 	type UserData = {
 		_id?: number;
@@ -173,7 +174,7 @@
 </script>
 
 <svelte:head>
-	<title>Profile - Extreme Violence</title>
+	<title>Profile - {siteTitle}</title>
 </svelte:head>
 
 <Header />

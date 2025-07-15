@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import Header from '$lib/components/organisms/Header.svelte';
 	import Footer from '$lib/components/organisms/Footer.svelte';
+	import { title as siteTitle } from '$lib/data/meta';
 
 	let loading = false;
 	let errorMessage = '';
@@ -34,7 +35,7 @@
 </script>
 
 <svelte:head>
-	<title>Login - Extreme Violence</title>
+	<title>Login - {siteTitle}</title>
 </svelte:head>
 
 <Header />

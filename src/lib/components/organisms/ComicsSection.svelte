@@ -1,8 +1,8 @@
 <script lang="ts">
-	import BlogPostCard from '$lib/components/molecules/BlogPostCard.svelte';
-	import type { BlogPost } from '$lib/utils/types';
+	import ComicCard from '$lib/components/molecules/ComicCard.svelte';
+	import type { ComicsContentModel } from '$lib/utils/types';
 
-	export let posts: BlogPost[];
+	export let posts: ComicsContentModel[];
 
 	// Separate posts into series and short stories
 	$: seriesPosts = posts.filter((post) => post.series === true);
@@ -15,7 +15,7 @@
 			<h2 class="section-title">Series</h2>
 			<div class="grid">
 				{#each seriesPosts as post}
-					<BlogPostCard
+					<ComicCard
 						slug={post.slug}
 						title={post.title}
 						excerpt={post.excerpt}
@@ -33,7 +33,7 @@
 			<h2 class="section-title">Short Stories</h2>
 			<div class="grid">
 				{#each shortStoryPosts as post}
-					<BlogPostCard
+					<ComicCard
 						slug={post.slug}
 						title={post.title}
 						excerpt={post.excerpt}
